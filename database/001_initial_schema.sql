@@ -24,7 +24,7 @@ create type prediction_result as enum (
     'AWAY'
 );
 
-create type match_decision as enum (
+create type match_duration as enum (
     'NINETY_MINUTES',
     'EXTRA_TIME',
     'PENALTY_SHOOTOUT'
@@ -94,7 +94,7 @@ create table predictions
 
     predicted_away_goals integer default 0,
 
-    predicted_match_decision match_decision,
+    predicted_duration match_duration,
 
     manual_override integer default 0,
 
@@ -106,10 +106,6 @@ create table predictions
 
     unique(contestant_id, match_id)
 );
-
-alter table predictions
-add constraint uq_prediction
-unique(match_id,contestant_id);
 
 ------------------------------------------------------------
 -- SCORER PREDICTIONS
@@ -171,7 +167,7 @@ create table match_results
 
     winner prediction_result,
 
-    match_decision match_decision,
+    duration match_duration,
 
     created_at timestamptz default now()
 );
@@ -213,7 +209,7 @@ create table point_breakdowns
 
     scorer_points integer default 0,
 
-    match_decision_points integer default 0,
+    duration_points integer default 0,
 
     overprediction_penalty integer default 0,
 

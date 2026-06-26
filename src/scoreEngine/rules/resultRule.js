@@ -1,15 +1,68 @@
-const ResultRule = {
+class ResultRule extends BaseRule {
 
-    calculate(predicted, actual) {
+    constructor() {
+        super("Match Result");
+    }
 
-        if (predicted === actual)
+    calculate(match, prediction) {
 
-            return ruleRepository.get("MATCH_RESULT_CORRECT");
+        // Defensive check
 
-        return ruleRepository.get("MATCH_RESULT_WRONG");
+        if (!match?.actual || !prediction) {
+
+            return this.failure(
+                0,
+                {
+                    reason: "Incomplete data"
+                }
+            );
+
+        }
+
+        const predicted =
+            ScoreEngine.getPredictedScore(prediction);
+
+        const actual =
+            ScoreEngine.getActualScore(match);
+
+        const predictedResult =
+            ScoreEngine.getResult(
+                predicted.home,
+                predicted.away
+            );
+
+        const actualResult =
+            ScoreEngine.getResult(
+                actual.home,
+                actual.away
+            );
+
+        if (predictedResult === actualResult) {
+
+            return this.success(
+                20,
+                {
+                    predictedResult,
+                    actualResult
+                }
+            );
+
+        }
+
+        return this.failure(
+            -10,
+            {
+                predictedResult,
+                actualResult
+            }
+        );
 
     }
 
-};
+}
 
-window.ResultRule = ResultRule;
+const resultRule = new ResultRule();
+
+ScoreEngine.register(resultRule);
+
+window.ResultRule = resultRule;
