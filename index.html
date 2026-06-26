@@ -1,154 +1,163 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#052f5f">
-    <title>TFL FIFA 26 Predictions</title>
-    <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <div class="app-shell">
-      <header class="top-app-bar">
-        <div class="brand-mark" aria-hidden="true">TFL</div>
-        <div>
-          <p class="eyebrow">FIFA World Cup 2026</p>
-          <h1>TFL Prediction League</h1>
-        </div>
-        <button class="export-button" id="exportButton" aria-label="Export data">
-          <span class="material-icon" data-icon="v">download</span>
-          <span>Export</span>
-        </button>
-      </header>
 
-      <nav class="tabs" aria-label="Main sections">
-        <button class="tab active" data-view="dashboard">Dashboard</button>
-        <button class="tab" data-view="matches">Matches</button>
-        <button class="tab" data-view="overall">Tournament</button>
-      </nav>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#052f5f">
+  <title>TFL FIFA 26 Predictions</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
 
-      <main>
-        <section class="view active" id="dashboardView">
-          <section class="hero-panel">
-            <div>
-              <p class="eyebrow">Thek Football League</p>
-              <h2>World Cup predictions, bragging rights, and the table that remembers everything.</h2>
-            </div>
-            <div class="hero-ball" aria-hidden="true"></div>
-          </section>
+<body>
+  <div class="app-shell">
+    <header class="top-app-bar">
+      <div class="brand-mark" aria-hidden="true">TFL</div>
+      <div>
+        <p class="eyebrow">FIFA World Cup 2026</p>
+        <h1>TFL Prediction League</h1>
+      </div>
+      <button class="export-button" id="exportButton" aria-label="Export data">
+        <span class="material-icon" data-icon="v">download</span>
+        <span>Export</span>
+      </button>
+    </header>
 
-          <div class="score-strip">
-            <div class="metric">
-              <span>Total Players</span>
-              <strong id="metricPlayers">6</strong>
-            </div>
-            <div class="metric">
-              <span>Leader</span>
-              <strong id="metricLeader">-</strong>
-            </div>
-            <div class="metric">
-              <span>Weekly Topper</span>
-              <strong id="metricTopper">-</strong>
-            </div>
-          </div>
+    <nav class="tabs" aria-label="Main sections">
+      <button class="tab active" data-view="dashboard">Dashboard</button>
+      <button class="tab" data-view="matches">Matches</button>
+      <button class="tab" data-view="overall">Tournament</button>
+    </nav>
 
-          <section class="panel">
-            <div class="section-title">
-              <div>
-                <p class="eyebrow">Live table</p>
-                <h2>Leaderboard</h2>
-              </div>
-              <button class="text-button" id="recalculateAllButton">Calculate All</button>
-            </div>
-            <div class="leaderboard" id="leaderboard"></div>
-          </section>
-
-          <section class="panel">
-            <div class="section-title">
-              <div>
-                <p class="eyebrow">This week</p>
-                <h2>Weekly Points</h2>
-              </div>
-            </div>
-            <div class="weekly-grid" id="weeklyGrid"></div>
-          </section>
-        </section>
-
-        <section class="view" id="matchesView">
-          <section class="panel">
-            <div class="section-title">
-              <div>
-                <p class="eyebrow">Fixtures</p>
-                <h2>Today Onward</h2>
-              </div>
-              <select id="roundFilter" class="input compact" aria-label="Round filter"></select>
-            </div>
-            <div class="match-list" id="matchList"></div>
-          </section>
-        </section>
-
-        <section class="view" id="overallView">
-          <section class="panel">
-            <div class="section-title">
-              <div>
-                <p class="eyebrow">Tournament picks</p>
-                <h2>Awards and Knockout Futures</h2>
-              </div>
-              <button class="text-button" id="calculateTournamentButton">Calculate</button>
-            </div>
-            <div class="actuals-grid">
-              <label>
-                Golden Boot winner
-                <input class="input" id="actualGoldenBoot" placeholder="Player name">
-              </label>
-              <label>
-                Golden Glove winner
-                <input class="input" id="actualGoldenGlove" placeholder="Player name">
-              </label>
-              <label>
-                Golden Ball winner
-                <input class="input" id="actualGoldenBall" placeholder="Player name">
-              </label>
-              <label>
-                Champion
-                <input class="input" id="actualChampion" placeholder="Country">
-              </label>
-              <label>
-                Actual semi-finalists
-                <input class="input" id="actualSemiFinalists" placeholder="4 countries, comma separated">
-              </label>
-              <label>
-                Actual finalists
-                <input class="input" id="actualFinalists" placeholder="2 countries, comma separated">
-              </label>
-            </div>
-            <div class="tournament-grid" id="tournamentGrid"></div>
-          </section>
-        </section>
-      </main>
-    </div>
-
-    <dialog id="matchDialog">
-      <form method="dialog" class="dialog-card">
-        <div class="dialog-header">
+    <main>
+      <section class="view active" id="dashboardView">
+        <section class="hero-panel">
           <div>
-            <p class="eyebrow" id="dialogRound">Match</p>
-            <h2 id="dialogTitle">Prediction</h2>
+            <p class="eyebrow">Thek Football League</p>
+            <h2>World Cup predictions, bragging rights, and the table that remembers everything.</h2>
           </div>
-          <button class="icon-button" value="cancel" aria-label="Close">
-            <span class="material-icon" data-icon="x">close</span>
-          </button>
-        </div>
-        <div class="dialog-content" id="dialogContent"></div>
-        <div class="dialog-actions">
-          <button class="text-button" value="cancel">Close</button>
-          <button class="primary-button" id="saveMatchButton" value="default">Save</button>
-        </div>
-      </form>
-    </dialog>
+          <div class="hero-ball" aria-hidden="true"></div>
+        </section>
 
-    <div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
-    <script src="app.js"></script>
-  </body>
+        <div class="score-strip">
+          <div class="metric">
+            <span>Total Players</span>
+            <strong id="metricPlayers">6</strong>
+          </div>
+          <div class="metric">
+            <span>Leader</span>
+            <strong id="metricLeader">-</strong>
+          </div>
+          <div class="metric">
+            <span>Weekly Topper</span>
+            <strong id="metricTopper">-</strong>
+          </div>
+        </div>
+
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">Live table</p>
+              <h2>Leaderboard</h2>
+            </div>
+            <button class="text-button" id="recalculateAllButton">Calculate All</button>
+          </div>
+          <div class="leaderboard" id="leaderboard"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">This week</p>
+              <h2>Weekly Points</h2>
+            </div>
+          </div>
+          <div class="weekly-grid" id="weeklyGrid"></div>
+        </section>
+      </section>
+
+      <section class="view" id="matchesView">
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">Fixtures</p>
+              <h2>Today Onward</h2>
+            </div>
+            <select id="roundFilter" class="input compact" aria-label="Round filter"></select>
+          </div>
+          <div class="match-list" id="matchList"></div>
+        </section>
+      </section>
+
+      <section class="view" id="overallView">
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">Tournament picks</p>
+              <h2>Awards and Knockout Futures</h2>
+            </div>
+            <button class="text-button" id="calculateTournamentButton">Calculate</button>
+          </div>
+          <div class="actuals-grid">
+            <label>
+              Golden Boot winner
+              <input class="input" id="actualGoldenBoot" placeholder="Player name">
+            </label>
+            <label>
+              Golden Glove winner
+              <input class="input" id="actualGoldenGlove" placeholder="Player name">
+            </label>
+            <label>
+              Golden Ball winner
+              <input class="input" id="actualGoldenBall" placeholder="Player name">
+            </label>
+            <label>
+              Champion
+              <input class="input" id="actualChampion" placeholder="Country">
+            </label>
+            <label>
+              Actual semi-finalists
+              <input class="input" id="actualSemiFinalists" placeholder="4 countries, comma separated">
+            </label>
+            <label>
+              Actual finalists
+              <input class="input" id="actualFinalists" placeholder="2 countries, comma separated">
+            </label>
+          </div>
+          <div class="tournament-grid" id="tournamentGrid"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="matchDialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow" id="dialogRound">Match</p>
+          <h2 id="dialogTitle">Prediction</h2>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Close">
+          <span class="material-icon" data-icon="x">close</span>
+        </button>
+      </div>
+      <div class="dialog-content" id="dialogContent"></div>
+      <div class="dialog-actions">
+        <button class="text-button" value="cancel">Close</button>
+        <button class="primary-button" id="saveMatchButton" value="default">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="js/config.js"></script>
+
+  <script src="services/supabaseClient.js"></script>
+  
+  <script src="app.js"></script>
+</body>
+
 </html>
