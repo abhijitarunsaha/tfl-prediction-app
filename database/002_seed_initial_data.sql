@@ -76,7 +76,7 @@ values
 
 ('OVERPREDICT_5',-20,'Predicted goals exceed by 5 or more'),
 
-('MATCH_DURATION',10,'Correct knockout duration'),
+('MATCH_DECISION',10,'Correct match decision (90 mins / Extra Time / Penalties)'),
 
 ('GOLDEN_BOOT',75,'Golden Boot'),
 
