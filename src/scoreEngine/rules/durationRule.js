@@ -1,4 +1,4 @@
-const DurationRule = {
+const MatchDecisionRule = {
 
     calculate(match, prediction) {
 
@@ -19,14 +19,14 @@ const DurationRule = {
         if (!knockoutStages.includes(match.stage))
             return 0;
 
-        if (prediction.duration === match.actualDuration)
+        if (prediction.matchDecision === match.actualMatchDecision) {
 
-            return ruleRepository.get("MATCH_DURATION");
+            return ruleRepository.get("MATCH_DECISION");
 
-        return 0;
+            return 0;
 
+        }
     }
-
 };
 
-window.DurationRule = DurationRule;
+window.MatchDecisionRule = MatchDecisionRule;

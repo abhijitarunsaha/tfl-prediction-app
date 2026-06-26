@@ -180,6 +180,25 @@ function scoreMatch(match, name) {
     if (ownGoals.includes(normalize(scorer))) points -= 10;
   });
 
+  const knockoutRounds = [
+    "Round of 32",
+    "Round of 16",
+    "Quarter Final",
+    "Semi Final",
+    "Final"
+  ];
+
+  if (knockoutRounds.includes(match.round)) {
+
+    if (
+        prediction.matchDecision ===
+        match.actual.matchDecision
+    ) {
+        points += 10;
+    }
+
+  }
+
   const predictedTotal = predHome + predAway;
   const actualTotal = actualHome + actualAway;
   const excess = predictedTotal - actualTotal;
@@ -325,6 +344,26 @@ function renderMatchDialog() {
       <div class="result-grid">
         <label>${match.home} goals<input class="input" data-result="homeGoals" type="number" min="0" value="${match.actual.homeGoals}"></label>
         <label>${match.away} goals<input class="input" data-result="awayGoals" type="number" min="0" value="${match.actual.awayGoals}"></label>
+        ${showMatchDecision ? `<label>
+
+Match Decision
+
+<select
+class="input"
+data-result="matchDecision">
+
+<option value="">Select</option>
+
+<option value="90">90 Minutes</option>
+
+<option value="ET">Extra Time</option>
+
+<option value="PEN">Penalties</option>
+
+</select>
+
+</label>
+` : ""}
         <label class="full-span">Actual scorers<textarea class="input" data-result="scorers" rows="2" placeholder="Comma separated">${match.actual.scorers}</textarea></label>
         <label class="full-span">Own goals<textarea class="input" data-result="ownGoals" rows="2" placeholder="Comma separated">${match.actual.ownGoals}</textarea></label>
       </div>
@@ -336,12 +375,52 @@ function renderMatchDialog() {
 function predictionCard(match, name, playerOptions) {
   const prediction = match.predictions[name] || { homeGoals: "", awayGoals: "", scorers: "" };
   const override = state.overrides[`${match.id}:${name}`] ?? "";
+  const knockoutRounds = [
+    "Round of 32",
+    "Round of 16",
+    "Quarter Final",
+    "Semi Final",
+    "Final"
+  ];
+
+  const showMatchDecision =
+    knockoutRounds.includes(match.round);
   return `
     <section class="contestant-card">
       <h3>${name}</h3>
+      <label>
+Copy Prediction
+
+<select
+class="input"
+data-copy="${name}">
+
+<option value="">None</option>
+
+${contestants
+      .filter(c => c !== name)
+      .map(c => `<option>${c}</option>`)
+      .join("")}
+
+</select>
+
+</label>
       <div class="prediction-grid">
         <label>${match.home} goals<input class="input" data-player="${name}" data-field="homeGoals" type="number" min="0" value="${prediction.homeGoals}"></label>
         <label>${match.away} goals<input class="input" data-player="${name}" data-field="awayGoals" type="number" min="0" value="${prediction.awayGoals}"></label>
+        ${showMatchDecision ? `
+<label>
+    Match Decision
+    <select class="input"
+            data-player="${name}"
+            data-field="matchDecision">
+        <option value="">Select</option>
+        <option value="90">90 Minutes</option>
+        <option value="ET">Extra Time</option>
+        <option value="PEN">Penalties</option>
+    </select>
+</label>
+` : ""}
         <label>Manual points<input class="input" data-override="${name}" type="number" value="${override}" placeholder="Auto"></label>
         <label class="full-span">Scorers
           <select class="input" data-scorer-select="${name}">
@@ -517,23 +596,49 @@ document.addEventListener("change", (event) => {
     textarea.value = [...new Set(current)].join(", ");
     scorerSelect.value = "";
   }
+  const copySelect =
+    event.target.closest("[data-copy]");
+
+  if (copySelect && copySelect.value) {
+
+    const target =
+      copySelect.dataset.copy;
+
+    const source =
+      copySelect.value;
+
+    const match =
+      state.matches.find(
+        m => m.id === activeMatchId
+      );
+
+    const prediction =
+      structuredClone(
+        match.predictions[source] || {}
+      );
+
+    match.predictions[target] = prediction;
+
+    renderMatchDialog();
+
+  }
 });
 
 byId("saveMatchButton").addEventListener("click", saveActiveMatch);
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
+  navigator.serviceWorker.register("sw.js").catch(() => { });
 }
 
 renderAll();
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-    await testSupabaseConnection();
+  await testSupabaseConnection();
 
-    const leaderboard =
+  /*const leaderboard =
     await leaderboardRepository.getLeaderboard();
 
-console.table(leaderboard);
+  console.table(leaderboard);*/
 
 });
