@@ -526,3 +526,9 @@ if ("serviceWorker" in navigator) {
 }
 
 renderAll();
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+    await testSupabaseConnection();
+
+});
