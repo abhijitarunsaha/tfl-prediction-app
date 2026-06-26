@@ -531,4 +531,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await testSupabaseConnection();
 
+    const leaderboard =
+    await leaderboardRepository.getLeaderboard();
+
+console.table(leaderboard);
+
 });
