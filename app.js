@@ -149,64 +149,74 @@ function splitList(value) {
     .filter(Boolean);
 }
 
+function parseScorerPredictions(value) {
+  return splitList(value).map(item => {
+    const ownGoal = item.endsWith(" (OG)");
+
+    return {
+      player: ownGoal
+        ? item.replace(/\s+\(OG\)$/, "")
+        : item,
+      ownGoal
+    };
+  });
+}
+
+function parseActualScorers(value) {
+  return splitList(value).map(item => {
+    const ownGoal = item.endsWith(" (OG)");
+
+    return {
+      player: ownGoal
+        ? item.replace(/\s+\(OG\)$/, "")
+        : item,
+      ownGoal
+    };
+  });
+}
+
 function outcome(home, away) {
   if (home === away) return "draw";
   return home > away ? "home" : "away";
 }
 
 function scoreMatch(match, name) {
-  const prediction = match.predictions[name] || {};
-  if (prediction.homeGoals === "" || prediction.awayGoals === "" || prediction.homeGoals === undefined || prediction.awayGoals === undefined) return 0;
-  if (match.actual.homeGoals === "" || match.actual.awayGoals === "" || match.actual.homeGoals === undefined || match.actual.awayGoals === undefined) return 0;
-  const actualHome = Number(match.actual.homeGoals);
-  const actualAway = Number(match.actual.awayGoals);
-  const predHome = Number(prediction.homeGoals);
-  const predAway = Number(prediction.awayGoals);
-  if ([actualHome, actualAway, predHome, predAway].some(Number.isNaN)) return 0;
 
-  let points = 0;
-  points += outcome(predHome, predAway) === outcome(actualHome, actualAway) ? 20 : -10;
+  const prediction = match.predictions?.[name];
 
-  if (predHome === actualHome && predAway === actualAway) {
-    points += 20;
-  } else if (predHome - predAway === actualHome - actualAway) {
-    points += 10;
+  if (!prediction) {
+    return {
+      total: 0,
+      breakdown: []
+    };
   }
 
-  const actualScorers = splitList(match.actual.scorers).map(normalize);
-  const ownGoals = splitList(match.actual.ownGoals).map(normalize);
-  splitList(prediction.scorers).forEach((scorer) => {
-    if (actualScorers.includes(normalize(scorer))) points += 10;
-    if (ownGoals.includes(normalize(scorer))) points -= 10;
-  });
-
-  const knockoutRounds = [
-    "Round of 32",
-    "Round of 16",
-    "Quarter Final",
-    "Semi Final",
-    "Final"
-  ];
-
-  if (knockoutRounds.includes(match.round)) {
-
-    if (
-        prediction.matchDecision ===
-        match.actual.matchDecision
-    ) {
-        points += 10;
-    }
-
+  if (
+    prediction.homeGoals === "" ||
+    prediction.awayGoals === "" ||
+    prediction.homeGoals === undefined ||
+    prediction.awayGoals === undefined
+  ) {
+    return {
+      total: 0,
+      breakdown: []
+    };
   }
 
-  const predictedTotal = predHome + predAway;
-  const actualTotal = actualHome + actualAway;
-  const excess = predictedTotal - actualTotal;
-  if (excess >= 5) points -= 20;
-  else if (excess >= 3) points -= 10;
+  if (
+    match.actual.homeGoals === "" ||
+    match.actual.awayGoals === "" ||
+    match.actual.homeGoals === undefined ||
+    match.actual.awayGoals === undefined
+  ) {
+    return {
+      total: 0,
+      breakdown: []
+    };
+  }
 
-  const override = state.overrides[`${match.id}:${name}`];
-  return override === "" || override === undefined ? points : Number(override);
+  return ScoreEngine.calculate(match, prediction);
+
 }
 
 function scoreTournament(name) {
@@ -243,11 +253,11 @@ function scoreTournament(name) {
 
 function totals() {
   return contestants.map((name) => {
-    const matchPoints = state.matches.reduce((sum, match) => sum + scoreMatch(match, name), 0);
+    const matchPoints = state.matches.reduce((sum, match) => sum + scoreMatch(match, name).total, 0);
     const tournamentPoints = scoreTournament(name);
     const currentWeek = state.matches
       .filter((match) => new Date(match.kickoff) >= new Date("2026-06-26") && new Date(match.kickoff) < new Date("2026-07-03"))
-      .reduce((sum, match) => sum + scoreMatch(match, name), 0);
+      .reduce((sum, match) => sum + scoreMatch(match, name).total, 0);
     return {
       name,
       base: baseScores[name],
@@ -328,10 +338,43 @@ function openMatchDialog(matchId) {
 }
 
 function renderMatchDialog() {
+  const knockoutRounds = [
+    "Round of 32",
+    "Round of 16",
+    "Quarter Final",
+    "Semi Final",
+    "Final"
+  ];
   const match = state.matches.find((item) => item.id === activeMatchId);
+  const showMatchDecision =
+    knockoutRounds.includes(match.round);
   byId("dialogRound").textContent = `${match.round} | ${formatDate(match.kickoff)}`;
   byId("dialogTitle").textContent = `${match.home} vs ${match.away}`;
-  const playerOptions = [...new Set([...(squads[match.home] || []), ...(squads[match.away] || [])])];
+  const homePlayers =
+    squads[match.home] || [];
+
+  const awayPlayers =
+    squads[match.away] || [];
+
+  const homeScorerOptions = [
+
+    ...homePlayers,
+
+    ...awayPlayers.map(
+      p => `${p} (OG)`
+    )
+
+  ];
+
+  const awayScorerOptions = [
+
+    ...awayPlayers,
+
+    ...homePlayers.map(
+      p => `${p} (OG)`
+    )
+
+  ];
   byId("dialogContent").innerHTML = `
     <section class="panel">
       <div class="section-title">
@@ -368,11 +411,21 @@ data-result="matchDecision">
         <label class="full-span">Own goals<textarea class="input" data-result="ownGoals" rows="2" placeholder="Comma separated">${match.actual.ownGoals}</textarea></label>
       </div>
     </section>
-    ${contestants.map((name) => predictionCard(match, name, playerOptions)).join("")}
+    ${contestants.map((name) => predictionCard(
+
+    match,
+
+    name,
+
+    homeScorerOptions,
+
+    awayScorerOptions
+
+  )).join("")}
   `;
 }
 
-function predictionCard(match, name, playerOptions) {
+function predictionCard(match, name, homeScorerOptions, awayScorerOptions) {
   const prediction = match.predictions[name] || { homeGoals: "", awayGoals: "", scorers: "" };
   const override = state.overrides[`${match.id}:${name}`] ?? "";
   const knockoutRounds = [
@@ -422,17 +475,120 @@ ${contestants
 </label>
 ` : ""}
         <label>Manual points<input class="input" data-override="${name}" type="number" value="${override}" placeholder="Auto"></label>
-        <label class="full-span">Scorers
-          <select class="input" data-scorer-select="${name}">
+        <label class="full-span">${match.home} Scorers
+          <select class="input"data-home-scorer-select="${name}">
             <option value="">Add scorer</option>
-            ${playerOptions.map((player) => `<option>${player}</option>`).join("")}
+            ${homeScorerOptions
+      .map(player =>
+        `<option>${player}</option>`
+      )
+      .join("")}
+          </select>
+        </label>
+        <label class="full-span">${match.away} Scorers
+          <select class="input" data-away-scorer-select="${name}">
+            <option value="">Add scorer</option>
+            ${awayScorerOptions
+      .map(player =>
+        `<option>${player}</option>`
+      )
+      .join("")}
           </select>
         </label>
         <label class="full-span">Selected scorers<textarea class="input" data-player="${name}" data-field="scorers" rows="2">${prediction.scorers || ""}</textarea></label>
       </div>
-      <p class="subtext">Current match points: ${scoreMatch(match, name)}</p>
+      ${(() => {
+
+      const score = scoreMatch(match, name);
+
+      return `
+
+        <div class="prediction-score">
+
+            <p class="subtext">
+
+                Current match points:
+                <strong>${score.total}</strong>
+
+            </p>
+
+            <details class="score-breakdown">
+
+                <summary>View Score Breakdown</summary>
+
+                ${renderScoreBreakdown(score.breakdown)}
+
+            </details>
+
+        </div>
+
+    `;
+
+    })()}
     </section>
   `;
+}
+
+function renderScoreBreakdown(breakdown = []) {
+
+    const RULE_LABELS = {
+
+        "Match Result": "🏆 Match Result",
+
+        "Exact Score": "🎯 Exact Score",
+
+        "Goal Difference": "📏 Goal Difference",
+
+        "Scorers": "⚽ Scorers",
+
+        "Match Decision": "⏱ Match Decision"
+
+    };
+
+    return `
+
+        <div class="score-breakdown-body">
+
+            ${breakdown.map(item => {
+
+                const label =
+                    RULE_LABELS[item.rule] ??
+                    item.rule;
+
+                const sign =
+                    item.points > 0 ? "+" : "";
+
+                const icon =
+                    item.matched
+                        ? "✅"
+                        : "❌";
+
+                return `
+
+                    <div class="score-breakdown-row">
+
+                        <span>
+
+                            ${icon} ${label}
+
+                        </span>
+
+                        <strong>
+
+                            ${sign}${item.points}
+
+                        </strong>
+
+                    </div>
+
+                `;
+
+            }).join("")}
+
+        </div>
+
+    `;
+
 }
 
 function saveActiveMatch() {
@@ -587,14 +743,46 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("change", (event) => {
   if (event.target.id === "roundFilter") renderMatches();
-  const scorerSelect = event.target.closest("[data-scorer-select]");
-  if (scorerSelect && scorerSelect.value) {
-    const name = scorerSelect.dataset.scorerSelect;
-    const textarea = document.querySelector(`textarea[data-player="${name}"][data-field="scorers"]`);
+  // Home team scorer dropdown
+  const homeScorer = event.target.closest("[data-home-scorer-select]");
+  if (homeScorer && homeScorer.value) {
+
+    const player = homeScorer.dataset.homeScorerSelect;
+
+    const textarea = document.querySelector(
+      `textarea[data-player="${player}"][data-field="scorers"]`
+    );
+
     const current = splitList(textarea.value);
-    current.push(scorerSelect.value);
-    textarea.value = [...new Set(current)].join(", ");
-    scorerSelect.value = "";
+
+    current.push(homeScorer.value);
+
+    textarea.value = current.join(", ");
+
+    homeScorer.value = "";
+
+    return;
+  }
+
+  // Away team scorer dropdown
+  const awayScorer = event.target.closest("[data-away-scorer-select]");
+  if (awayScorer && awayScorer.value) {
+
+    const player = awayScorer.dataset.awayScorerSelect;
+
+    const textarea = document.querySelector(
+      `textarea[data-player="${player}"][data-field="scorers"]`
+    );
+
+    const current = splitList(textarea.value);
+
+    current.push(awayScorer.value);
+
+    textarea.value = current.join(", ");
+
+    awayScorer.value = "";
+
+    return;
   }
   const copySelect =
     event.target.closest("[data-copy]");

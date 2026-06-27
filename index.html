@@ -160,15 +160,23 @@
   <script src="repositories/contestantRepository.js"></script>
 <script src="repositories/leaderboardRepository.js"></script>
 
+<!-- Rule Engine Core -->
 <script src="src/scoreEngine/rules/baseRule.js"></script>
-
 <script src="src/scoreEngine/scoreEngine.js"></script>
 
+<!-- Match Rules -->
 <script src="src/scoreEngine/rules/resultRule.js"></script>
 <script src="src/scoreEngine/rules/exactScoreRule.js"></script>
 <script src="src/scoreEngine/rules/goalDifferenceRule.js"></script>
+<script src="src/scoreEngine/rules/scorerRule.js"></script>
+<script src="src/scoreEngine/rules/matchDecisionRule.js"></script>
+<script src="src/scoreEngine/rules/overPredictionRule.js"></script>
 
 <script src="app.js"></script>
+
+<script src="src/dev/testRunner.js"></script>
+<script src="src/dev/testUtils.js"></script>
+<script src="src/dev/tests/matchTests.js"></script>
 </body>
 
 </html>
