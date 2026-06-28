@@ -9,97 +9,76 @@ const baseScores = {
   Jeet: 680
 };
 
-const squads = {
-  Argentina: ["Lionel Messi", "Julian Alvarez", "Lautaro Martinez", "Enzo Fernandez", "Alexis Mac Allister", "Angel Di Maria"],
-  Brazil: ["Vinicius Junior", "Rodrygo", "Neymar", "Raphinha", "Endrick", "Lucas Paqueta"],
-  France: ["Kylian Mbappe", "Antoine Griezmann", "Olivier Giroud", "Ousmane Dembele", "Aurelien Tchouameni", "Marcus Thuram"],
-  England: ["Harry Kane", "Jude Bellingham", "Bukayo Saka", "Phil Foden", "Cole Palmer", "Declan Rice"],
-  Spain: ["Alvaro Morata", "Lamine Yamal", "Pedri", "Nico Williams", "Dani Olmo", "Ferran Torres"],
-  Germany: ["Kai Havertz", "Jamal Musiala", "Florian Wirtz", "Niclas Fullkrug", "Leroy Sane", "Ilkay Gundogan"],
-  Portugal: ["Cristiano Ronaldo", "Bruno Fernandes", "Bernardo Silva", "Rafael Leao", "Goncalo Ramos", "Joao Felix"],
-  Netherlands: ["Memphis Depay", "Cody Gakpo", "Xavi Simons", "Wout Weghorst", "Donyell Malen", "Frenkie de Jong"],
-  USA: ["Christian Pulisic", "Folarin Balogun", "Gio Reyna", "Tim Weah", "Weston McKennie", "Yunus Musah"],
-  Turkey: ["Arda Guler", "Kenan Yildiz", "Hakan Calhanoglu", "Kerem Akturkoglu", "Baris Alper Yilmaz", "Orkun Kokcu"],
-  Paraguay: ["Miguel Almiron", "Julio Enciso", "Ramon Sosa", "Matias Rojas", "Adam Bareiro", "Diego Gomez"],
-  Australia: ["Mathew Leckie", "Mitchell Duke", "Craig Goodwin", "Riley McGree", "Jackson Irvine", "Martin Boyle"],
-  Iraq: ["Aymen Hussein", "Ali Jasim", "Ibrahim Bayesh", "Mohannad Ali", "Bashar Resan", "Amir Al-Ammari"],
-  Norway: ["Erling Haaland", "Martin Odegaard", "Alexander Sorloth", "Oscar Bobb", "Antonio Nusa", "Fredrik Aursnes"],
-  Mexico: ["Santiago Gimenez", "Hirving Lozano", "Uriel Antuna", "Edson Alvarez", "Luis Chavez", "Henry Martin"],
-  Canada: ["Jonathan David", "Alphonso Davies", "Cyle Larin", "Tajon Buchanan", "Stephen Eustaquio", "Ismael Kone"],
-  Japan: ["Kaoru Mitoma", "Takefusa Kubo", "Daichi Kamada", "Takumi Minamino", "Ritsu Doan", "Ayase Ueda"],
-  Uruguay: ["Darwin Nunez", "Federico Valverde", "Luis Suarez", "Facundo Pellistri", "Giorgian de Arrascaeta", "Manuel Ugarte"],
-  Croatia: ["Luka Modric", "Andrej Kramaric", "Bruno Petkovic", "Ivan Perisic", "Mateo Kovacic", "Marcelo Brozovic"],
-  Morocco: ["Achraf Hakimi", "Hakim Ziyech", "Youssef En-Nesyri", "Sofiane Boufal", "Amine Harit", "Azzedine Ounahi"],
-  Senegal: ["Sadio Mane", "Nicolas Jackson", "Ismaila Sarr", "Iliman Ndiaye", "Pape Matar Sarr", "Idrissa Gueye"],
-  "TBD A": ["TBD Player 1", "TBD Player 2", "TBD Player 3"],
-  "TBD B": ["TBD Player 1", "TBD Player 2", "TBD Player 3"]
-};
-
-const seedMatches = [
-  ["GS-1", "Group Stage", "2026-06-26T21:30:00+05:30", "Turkey", "USA"],
-  ["GS-2", "Group Stage", "2026-06-26T21:30:00+05:30", "Paraguay", "Australia"],
-  ["GS-3", "Group Stage", "2026-06-27T00:30:00+05:30", "Senegal", "Iraq"],
-  ["GS-4", "Group Stage", "2026-06-27T00:30:00+05:30", "Norway", "France"],
-  ["R32-1", "Round of 32", "2026-06-28T21:30:00+05:30", "Argentina", "Mexico"],
-  ["R32-2", "Round of 32", "2026-06-29T00:30:00+05:30", "France", "USA"],
-  ["R32-3", "Round of 32", "2026-06-29T21:30:00+05:30", "Brazil", "Canada"],
-  ["R32-4", "Round of 32", "2026-06-30T00:30:00+05:30", "England", "Japan"],
-  ["R32-5", "Round of 32", "2026-06-30T21:30:00+05:30", "Spain", "Senegal"],
-  ["R32-6", "Round of 32", "2026-07-01T00:30:00+05:30", "Germany", "Morocco"],
-  ["R32-7", "Round of 32", "2026-07-01T21:30:00+05:30", "Portugal", "Croatia"],
-  ["R32-8", "Round of 32", "2026-07-02T00:30:00+05:30", "Netherlands", "Uruguay"],
-  ["R32-9", "Round of 32", "2026-07-02T21:30:00+05:30", "TBD A", "TBD B"],
-  ["R32-10", "Round of 32", "2026-07-03T00:30:00+05:30", "TBD A", "TBD B"],
-  ["R32-11", "Round of 32", "2026-07-03T21:30:00+05:30", "TBD A", "TBD B"],
-  ["R32-12", "Round of 32", "2026-07-04T00:30:00+05:30", "TBD A", "TBD B"],
-  ["R32-13", "Round of 32", "2026-07-04T21:30:00+05:30", "TBD A", "TBD B"],
-  ["R32-14", "Round of 32", "2026-07-05T00:30:00+05:30", "TBD A", "TBD B"],
-  ["R32-15", "Round of 32", "2026-07-05T21:30:00+05:30", "TBD A", "TBD B"],
-  ["R32-16", "Round of 32", "2026-07-06T00:30:00+05:30", "TBD A", "TBD B"],
-  ["R16-1", "Round of 16", "2026-07-07T21:30:00+05:30", "TBD A", "TBD B"],
-  ["R16-2", "Round of 16", "2026-07-08T00:30:00+05:30", "TBD A", "TBD B"],
-  ["R16-3", "Round of 16", "2026-07-08T21:30:00+05:30", "TBD A", "TBD B"],
-  ["R16-4", "Round of 16", "2026-07-09T00:30:00+05:30", "TBD A", "TBD B"],
-  ["R16-5", "Round of 16", "2026-07-09T21:30:00+05:30", "TBD A", "TBD B"],
-  ["R16-6", "Round of 16", "2026-07-10T00:30:00+05:30", "TBD A", "TBD B"],
-  ["R16-7", "Round of 16", "2026-07-10T21:30:00+05:30", "TBD A", "TBD B"],
-  ["R16-8", "Round of 16", "2026-07-11T00:30:00+05:30", "TBD A", "TBD B"],
-  ["QF-1", "Quarter-final", "2026-07-12T00:30:00+05:30", "TBD A", "TBD B"],
-  ["QF-2", "Quarter-final", "2026-07-12T21:30:00+05:30", "TBD A", "TBD B"],
-  ["QF-3", "Quarter-final", "2026-07-13T00:30:00+05:30", "TBD A", "TBD B"],
-  ["QF-4", "Quarter-final", "2026-07-13T21:30:00+05:30", "TBD A", "TBD B"],
-  ["SF-1", "Semi-final", "2026-07-15T00:30:00+05:30", "TBD A", "TBD B"],
-  ["SF-2", "Semi-final", "2026-07-16T00:30:00+05:30", "TBD A", "TBD B"],
-  ["F-1", "Final", "2026-07-20T00:30:00+05:30", "TBD A", "TBD B"]
-].map(([id, round, kickoff, home, away]) => ({
-  id,
-  round,
-  kickoff,
-  home,
-  away,
-  actual: { homeGoals: "", awayGoals: "", scorers: "", ownGoals: "" },
-  predictions: {}
-}));
-
 const storageKey = "tfl-fifa26-prediction-state-v1";
 let state = loadState();
 let activeMatchId = null;
 
+initializeApplication();
+
+async function initializeApplication() {
+
+  state.matches =
+    await SyncService.loadTournament();
+
+  renderMatches();
+
+  renderDashboard();
+
+  await SyncService.sync();
+
+  SyncService.start();
+
+}
+
 function loadState() {
-  const saved = localStorage.getItem(storageKey);
-  if (saved) return reconcileState(JSON.parse(saved));
+
+  const saved =
+    localStorage.getItem(storageKey);
+
+  if (saved)
+    return reconcileState(JSON.parse(saved));
+
   return {
-    matches: seedMatches,
-    tournamentActuals: { goldenBoot: "", goldenGlove: "", goldenBall: "", champion: "", semiFinalists: "", finalists: "" },
-    tournamentPredictions: Object.fromEntries(contestants.map((name) => [name, defaultTournamentPrediction()])),
+
+    matches: [],
+
+    tournamentActuals: {
+      goldenBoot: "",
+      goldenGlove: "",
+      goldenBall: "",
+      champion: "",
+      semiFinalists: "",
+      finalists: ""
+    },
+
+    tournamentPredictions:
+      Object.fromEntries(
+        contestants.map(name => [
+          name,
+          defaultTournamentPrediction()
+        ])
+      ),
+
     overrides: {},
-    settings: { apiEndpoint: "", apiKey: "" }
+
+    settings: {
+      apiEndpoint: "",
+      apiKey: ""
+    }
+
   };
+
+}
+
+async function getTeamPlayers(teamName) {
+
+  return await FootballDataProvider.getSquad(teamName);
+
 }
 
 function reconcileState(savedState) {
-  const matchesById = new Map((savedState.matches || []).map((match) => [match.id, match]));
-  savedState.matches = seedMatches.map((seedMatch) => matchesById.get(seedMatch.id) || seedMatch);
+  savedState.matches =
+        savedState.matches || [];
   savedState.tournamentActuals = {
     goldenBoot: "",
     goldenGlove: "",
@@ -325,19 +304,31 @@ function submittedCount(match) {
 }
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short"
-  }).format(new Date(value));
+
+    if (!value)
+        return "-";
+
+    return new Intl.DateTimeFormat(
+        "en-IN",
+        {
+
+            dateStyle: "medium",
+
+            timeStyle: "short"
+
+        }
+
+    ).format(new Date(value));
+
 }
 
-function openMatchDialog(matchId) {
+async function openMatchDialog(matchId) {
   activeMatchId = matchId;
-  renderMatchDialog();
+  await renderMatchDialog();
   byId("matchDialog").showModal();
 }
 
-function renderMatchDialog() {
+async function renderMatchDialog() {
   const knockoutRounds = [
     "Round of 32",
     "Round of 16",
@@ -350,28 +341,33 @@ function renderMatchDialog() {
     knockoutRounds.includes(match.round);
   byId("dialogRound").textContent = `${match.round} | ${formatDate(match.kickoff)}`;
   byId("dialogTitle").textContent = `${match.home} vs ${match.away}`;
+
   const homePlayers =
-    squads[match.home] || [];
+    await getTeamPlayers(match.home);
 
   const awayPlayers =
-    squads[match.away] || [];
+    await getTeamPlayers(match.away);
 
   const homeScorerOptions = [
 
-    ...homePlayers,
+    ...homePlayers.map(
+      p => p.name
+    ),
 
     ...awayPlayers.map(
-      p => `${p} (OG)`
+      p => `${p.name} (OG)`
     )
 
   ];
 
   const awayScorerOptions = [
 
-    ...awayPlayers,
+    ...awayPlayers.map(
+      p => p.name
+    ),
 
     ...homePlayers.map(
-      p => `${p} (OG)`
+      p => `${p.name} (OG)`
     )
 
   ];
@@ -531,39 +527,39 @@ ${contestants
 
 function renderScoreBreakdown(breakdown = []) {
 
-    const RULE_LABELS = {
+  const RULE_LABELS = {
 
-        "Match Result": "🏆 Match Result",
+    "Match Result": "🏆 Match Result",
 
-        "Exact Score": "🎯 Exact Score",
+    "Exact Score": "🎯 Exact Score",
 
-        "Goal Difference": "📏 Goal Difference",
+    "Goal Difference": "📏 Goal Difference",
 
-        "Scorers": "⚽ Scorers",
+    "Scorers": "⚽ Scorers",
 
-        "Match Decision": "⏱ Match Decision"
+    "Match Decision": "⏱ Match Decision"
 
-    };
+  };
 
-    return `
+  return `
 
         <div class="score-breakdown-body">
 
             ${breakdown.map(item => {
 
-                const label =
-                    RULE_LABELS[item.rule] ??
-                    item.rule;
+    const label =
+      RULE_LABELS[item.rule] ??
+      item.rule;
 
-                const sign =
-                    item.points > 0 ? "+" : "";
+    const sign =
+      item.points > 0 ? "+" : "";
 
-                const icon =
-                    item.matched
-                        ? "✅"
-                        : "❌";
+    const icon =
+      item.matched
+        ? "✅"
+        : "❌";
 
-                return `
+    return `
 
                     <div class="score-breakdown-row">
 
@@ -583,7 +579,7 @@ function renderScoreBreakdown(breakdown = []) {
 
                 `;
 
-            }).join("")}
+  }).join("")}
 
         </div>
 
@@ -721,14 +717,14 @@ function renderAll() {
   renderTournament();
 }
 
-document.addEventListener("click", (event) => {
+document.addEventListener("click", async (event) => {
   const tab = event.target.closest(".tab");
   if (tab) {
     document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
     document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `${tab.dataset.view}View`));
   }
   const editButton = event.target.closest("[data-edit-match]");
-  if (editButton) openMatchDialog(editButton.dataset.editMatch);
+  if (editButton) await openMatchDialog(editButton.dataset.editMatch);
   if (event.target.closest("#recalculateAllButton")) {
     renderAll();
     showSnack("Leaderboard recalculated");

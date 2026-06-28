@@ -13,14 +13,52 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
+self.addEventListener("fetch", event => {
+
+  const url =
+    new URL(event.request.url);
+
+  if (
+
+    url.protocol !== "http:" &&
+    url.protocol !== "https:"
+
+  ) {
+
+    return;
+
+  }
+
   event.respondWith(
+
     fetch(event.request)
-      .then((response) => {
-        const copy = response.clone();
-        caches.open(cacheName).then((cache) => cache.put(event.request, copy));
+
+      .then(response => {
+
+        const copy =
+          response.clone();
+
+        caches.open(cacheName)
+
+          .then(cache =>
+
+            cache.put(
+              event.request,
+              copy
+            )
+
+          );
+
         return response;
+
       })
-      .catch(() => caches.match(event.request))
+
+      .catch(() =>
+
+        caches.match(event.request)
+
+      )
+
   );
+
 });
