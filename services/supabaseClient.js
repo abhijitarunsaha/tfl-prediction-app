@@ -1,6 +1,6 @@
 const tflSupabase = window.supabase.createClient(
-    window.TFL_CONFIG.SUPABASE_URL,
-    window.TFL_CONFIG.SUPABASE_ANON_KEY
+    Config.supabase.url,
+    Config.supabase.anonKey
 );
 
 window.supabaseClient = tflSupabase;
