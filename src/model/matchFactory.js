@@ -40,9 +40,9 @@ const MatchFactory = {
 
         return Object.fromEntries(
 
-            contestants.map(name => [
+            contestants.map(contestants => [
 
-                name,
+                contestants.name,
 
                 {
 

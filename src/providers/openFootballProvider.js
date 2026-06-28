@@ -82,40 +82,40 @@ class OpenFootballProvider {
 
     async getTournament() {
 
-    const response =
-        await HttpClient.get(this.fixturesUrl);
+        const response =
+            await HttpClient.get(this.fixturesUrl);
 
-    if (!response.success) {
+        if (!response.success) {
 
-        console.error(
-            "Unable to download tournament",
-            response.error
-        );
+            console.error(
+                "Unable to download tournament",
+                response.error
+            );
+
+            return {
+
+                name: "World Cup 2026",
+
+                matches: []
+
+            };
+
+        }
 
         return {
 
-            name: "World Cup 2026",
+            name: response.data.name,
 
-            matches: []
+            matches:
+                OpenFootballMapper
+                    .mapFixtures(response.data.matches)
+                    .map(match =>
+                        MatchFactory.create(match)
+                    )
 
         };
 
     }
-
-    return {
-
-        name: response.data.name,
-
-        matches:
-            OpenFootballMapper
-                .mapFixtures(response.data.matches)
-                .map(match =>
-                    MatchFactory.create(match)
-                )
-
-    };
-
-}
 
 }
 

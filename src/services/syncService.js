@@ -32,6 +32,24 @@ const SyncService = {
 
     },
 
+    async refreshLastSync() {
+
+        const value =
+
+            localStorage.getItem(
+                "tfl-last-sync"
+            );
+
+        document
+            .getElementById("last-sync")
+            .textContent =
+
+            value
+                ? formatDate(value)
+                : "Never";
+
+    },
+
     start() {
 
         if (this.intervalId)
@@ -47,28 +65,46 @@ const SyncService = {
 
     },
 
+    async refreshLastSync() {
+
+        const lastSync =
+
+            localStorage.getItem(
+                "tfl-last-sync"
+            );
+
+        document
+            .querySelector("#last-sync")
+            .textContent =
+
+            lastSync
+                ? formatDate(lastSync)
+                : "Never";
+
+    },
+
     async loadTournament() {
 
-    const cached =
-        localStorage.getItem("tfl-fixtures");
+        const cached =
+            localStorage.getItem("tfl-fixtures");
 
-    if (cached)
-        return JSON.parse(cached);
+        if (cached)
+            return JSON.parse(cached);
 
-    const fixtures =
-        await FootballDataProvider.getFixtures();
+        const fixtures =
+            await FootballDataProvider.getFixtures();
 
-    localStorage.setItem(
+        localStorage.setItem(
 
-        "tfl-fixtures",
+            "tfl-fixtures",
 
-        JSON.stringify(fixtures)
+            JSON.stringify(fixtures)
 
-    );
+        );
 
-    return fixtures;
+        return fixtures;
 
-}
+    }
 
 };
 

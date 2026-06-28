@@ -1,33 +1,46 @@
-const contestantRepository = {
+const ContestantRepository = {
 
     async getAll() {
 
-        const { data, error } =
-            await window.supabaseClient
-                .from("contestants")
-                .select(`
-                    id,
-                    name,
-                    baseline_scores(starting_points)
-                `)
-                .order("name");
+        const { data, error } = await supabaseClient
 
-        if (error)
-            throw error;
+            .from("contestants")
 
-        return data.map(c => ({
+            .select(`
+                id,
+                name,
+                baseline_scores (
+                    starting_points
+                )
+            `)
 
-            id: c.id,
+            .order("name");
 
-            name: c.name,
+        if (error) {
+
+            console.error(
+                "Unable to load contestants",
+                error
+            );
+
+            return [];
+
+        }
+
+        return data.map(contestant => ({
+
+            id: contestant.id,
+
+            name: contestant.name,
 
             startingPoints:
-                c.baseline_scores?.starting_points ?? 0
+                contestant.baseline_scores?.starting_points ?? 0
 
         }));
+
     }
 
 };
 
-window.contestantRepository =
-    contestantRepository;
+window.ContestantRepository =
+    ContestantRepository;

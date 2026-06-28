@@ -18,16 +18,29 @@
         <p class="eyebrow">FIFA World Cup 2026</p>
         <h1>Thek Football League</h1>
       </div>
-      <button class="export-button" id="exportButton" aria-label="Export data">
-        <span class="material-icon" data-icon="v">download</span>
-        <span>Export</span>
-      </button>
+      <div id="sync-status" class="sync-status">
+
+        Last synced:
+        <span id="last-sync">
+
+          Never
+
+        </span>
+        <button id="sync-btn" class="primary-button" title="Synchronize tournament data">
+
+          🔄 Sync
+
+        </button>
+
+      </div>
+
     </header>
 
     <nav class="tabs" aria-label="Main sections">
       <button class="tab active" data-view="dashboard">Dashboard</button>
       <button class="tab" data-view="matches">Matches</button>
-      <button class="tab" data-view="overall">Tournament</button>
+      <button class="tab" data-view="overall">Tournament Picks</button>
+      <button class="tab" data-view="overall">Tournament Rules</button>
     </nav>
 
     <main>
@@ -82,7 +95,6 @@
           <div class="section-title">
             <div>
               <p class="eyebrow">Fixtures</p>
-              <h2>Today Onward</h2>
             </div>
             <select id="roundFilter" class="input compact" aria-label="Round filter"></select>
           </div>
@@ -90,7 +102,7 @@
         </section>
       </section>
 
-      <section class="view" id="overallView">
+       <section class="view" id="overallView">
         <section class="panel">
           <div class="section-title">
             <div>
@@ -128,6 +140,396 @@
           <div class="tournament-grid" id="tournamentGrid"></div>
         </section>
       </section>
+
+      <section class="view" id="overallView">
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">Tournament Rules</p>
+            </div>
+          </div>
+          <div class="actuals-grid">
+            <div class="rules-page">
+
+              <h2>🏆 TFL FIFA World Cup 2026 Rules</h2>
+
+              <p class="rules-intro">
+                Welcome to the TFL Prediction League! Please read the scoring rules carefully before submitting your
+                predictions.
+              </p>
+
+              <!-- ====================================================== -->
+              <!-- Submission Rules -->
+              <!-- ====================================================== -->
+
+              <section class="rule-section">
+
+                <h3>📅 Submission Rules</h3>
+
+                <div class="rule-card">
+
+                  <ul>
+
+                    <li>
+                      Predictions for each match must be submitted
+                      <strong>at least 15 minutes before kick-off.</strong>
+                    </li>
+
+                    <li>
+                      Once submitted, predictions <strong>cannot be modified.</strong>
+                    </li>
+
+                    <li>
+                      Tournament predictions remain open only until their respective deadlines.
+                    </li>
+
+                  </ul>
+
+                </div>
+
+              </section>
+
+
+              <!-- ====================================================== -->
+              <!-- Match Prediction Rules -->
+              <!-- ====================================================== -->
+
+              <section class="rule-section">
+
+                <h3>⚽ Match Prediction Rules</h3>
+
+                <div class="rule-card">
+
+                  <h4>1️⃣ Match Result</h4>
+
+                  <table class="rule-table">
+
+                    <tr>
+                      <td>Correct Match Result</td>
+                      <td class="positive">+20</td>
+                    </tr>
+
+                    <tr>
+                      <td>Incorrect Match Result</td>
+                      <td class="negative">−10</td>
+                    </tr>
+
+                  </table>
+
+                </div>
+
+                <div class="rule-card">
+
+                  <h4>2️⃣ Exact Score</h4>
+
+                  <table class="rule-table">
+
+                    <tr>
+                      <td>Exact Score Prediction</td>
+                      <td class="positive">+20</td>
+                    </tr>
+
+                    <tr>
+                      <td>Correct Goal Difference</td>
+                      <td class="positive">+10</td>
+                    </tr>
+
+                  </table>
+
+                  <p class="rule-note">
+
+                    ✔ Exact Score takes precedence.
+                    Goal Difference points are <strong>not awarded</strong>
+                    if the Exact Score has already been predicted correctly.
+
+                  </p>
+
+                </div>
+
+                <div class="rule-card">
+
+                  <h4>3️⃣ Goalscorers</h4>
+
+                  <table class="rule-table">
+
+                    <tr>
+                      <td>Correct Goalscorer</td>
+                      <td class="positive">+10 each</td>
+                    </tr>
+
+                    <tr>
+                      <td>Predicted player scores an Own Goal</td>
+                      <td class="negative">−10</td>
+                    </tr>
+
+                  </table>
+
+                  <p class="rule-note">
+
+                    Number of predicted scorers for each team
+                    cannot exceed the number of goals predicted for that team.
+
+                  </p>
+
+                </div>
+
+                <div class="rule-card">
+
+                  <h4>4️⃣ Over Prediction Penalty</h4>
+
+                  <table class="rule-table">
+
+                    <tr>
+
+                      <td>
+                        Predicted total goals exceed actual goals by
+                        <strong>3–4</strong>
+                      </td>
+
+                      <td class="negative">−10</td>
+
+                    </tr>
+
+                    <tr>
+
+                      <td>
+                        Predicted total goals exceed actual goals by
+                        <strong>5 or more</strong>
+                      </td>
+
+                      <td class="negative">−20</td>
+
+                    </tr>
+
+                  </table>
+
+                  <p class="rule-note">
+
+                    No penalty applies if the actual total goals scored
+                    exceed the predicted total goals.
+
+                  </p>
+
+                </div>
+
+              </section>
+
+
+              <!-- ====================================================== -->
+              <!-- Tournament Rules -->
+              <!-- ====================================================== -->
+
+              <section class="rule-section">
+
+                <h3>🏆 Tournament Prediction Rules</h3>
+
+                <div class="rule-card">
+
+                  <h4>Golden Awards</h4>
+
+                  <ul>
+
+                    <li>Predict one Golden Boot winner.</li>
+
+                    <li>Predict one Golden Ball winner.</li>
+
+                    <li>Predict one Golden Glove winner.</li>
+
+                  </ul>
+
+                  <table class="rule-table">
+
+                    <tr>
+
+                      <td>Correct Prediction</td>
+
+                      <td class="positive">+75</td>
+
+                    </tr>
+
+                  </table>
+
+                  <p class="rule-note">
+
+                    Predictions can be submitted until the end of the
+                    <strong>Round of 32.</strong>
+
+                  </p>
+
+                </div>
+
+                <div class="rule-card">
+
+                  <h4>Knockout Predictions</h4>
+
+                  <p>
+
+                    Predict:
+
+                  </p>
+
+                  <ul>
+
+                    <li>4 Semi-finalists</li>
+
+                    <li>2 Finalists</li>
+
+                    <li>Champion</li>
+
+                  </ul>
+
+                  <table class="rule-table">
+
+                    <thead>
+
+                      <tr>
+
+                        <th>Prediction Window</th>
+
+                        <th>Semi-finalist</th>
+
+                        <th>Finalist</th>
+
+                        <th>Champion</th>
+
+                      </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                      <tr>
+
+                        <td>Before Round of 16</td>
+
+                        <td class="positive">+50 / <span class="negative">−25</span></td>
+
+                        <td class="positive">+75 / <span class="negative">−40</span></td>
+
+                        <td class="positive">+100 / <span class="negative">−50</span></td>
+
+                      </tr>
+
+                      <tr>
+
+                        <td>Before Quarter-finals</td>
+
+                        <td class="positive">+25 / <span class="negative">−15</span></td>
+
+                        <td class="positive">+50 / <span class="negative">−25</span></td>
+
+                        <td class="positive">+70 / <span class="negative">−35</span></td>
+
+                      </tr>
+
+                      <tr>
+
+                        <td>Before Semi-finals</td>
+
+                        <td>—</td>
+
+                        <td class="positive">+30 / <span class="negative">−15</span></td>
+
+                        <td class="positive">+50 / <span class="negative">−25</span></td>
+
+                      </tr>
+
+                    </tbody>
+
+                  </table>
+
+                  <p class="rule-note">
+
+                    Semi-finalists may be predicted until the Quarter-finals begin.
+                    Finalists and Champion may be predicted until the Semi-finals begin.
+
+                  </p>
+
+                </div>
+
+              </section>
+
+
+              <!-- ====================================================== -->
+              <!-- Examples -->
+              <!-- ====================================================== -->
+
+              <section class="rule-section">
+
+                <h3>📝 Over Prediction Examples</h3>
+
+                <div class="rule-card">
+
+                  <table class="example-table">
+
+                    <thead>
+
+                      <tr>
+
+                        <th>Prediction</th>
+
+                        <th>Result</th>
+
+                        <th>Difference</th>
+
+                        <th>Penalty</th>
+
+                      </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                      <tr>
+
+                        <td>4 – 2</td>
+
+                        <td>1 – 0</td>
+
+                        <td>6 − 1 = 5</td>
+
+                        <td class="negative">−20</td>
+
+                      </tr>
+
+                      <tr>
+
+                        <td>4 – 2</td>
+
+                        <td>2 – 1</td>
+
+                        <td>6 − 3 = 3</td>
+
+                        <td class="negative">−10</td>
+
+                      </tr>
+
+                      <tr>
+
+                        <td>1 – 0</td>
+
+                        <td>4 – 0</td>
+
+                        <td>Prediction lower</td>
+
+                        <td>0</td>
+
+                      </tr>
+
+                    </tbody>
+
+                  </table>
+
+                </div>
+
+              </section>
+
+            </div>
+          </div>
+        </section>
+      </section>
+
+
     </main>
   </div>
 
@@ -150,6 +552,38 @@
     </form>
   </dialog>
 
+  <div
+
+    id="developer-panel"
+
+    hidden>
+
+    <button
+
+        id="clone-match">
+
+        Clone Match
+
+    </button>
+
+    <button
+
+        id="reset-cache">
+
+        Clear Cache
+
+    </button>
+
+    <button
+
+        id="run-regression">
+
+        Regression
+
+    </button>
+
+</div>
+
   <div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -158,39 +592,41 @@
   <script src="services/supabaseClient.js"></script>
 
   <script src="repositories/contestantRepository.js"></script>
-<script src="repositories/leaderboardRepository.js"></script>
+  <script src="repositories/leaderboardRepository.js"></script>
 
-<!-- Rule Engine Core -->
-<script src="src/scoreEngine/rules/baseRule.js"></script>
-<script src="src/scoreEngine/scoreEngine.js"></script>
+  <!-- Rule Engine Core -->
+  <script src="src/scoreEngine/rules/baseRule.js"></script>
+  <script src="src/scoreEngine/scoreEngine.js"></script>
 
-<!-- Match Rules -->
-<script src="src/scoreEngine/rules/resultRule.js"></script>
-<script src="src/scoreEngine/rules/exactScoreRule.js"></script>
-<script src="src/scoreEngine/rules/goalDifferenceRule.js"></script>
-<script src="src/scoreEngine/rules/scorerRule.js"></script>
-<script src="src/scoreEngine/rules/matchDecisionRule.js"></script>
-<script src="src/scoreEngine/rules/overPredictionRule.js"></script>
+  <!-- Match Rules -->
+  <script src="src/scoreEngine/rules/resultRule.js"></script>
+  <script src="src/scoreEngine/rules/exactScoreRule.js"></script>
+  <script src="src/scoreEngine/rules/goalDifferenceRule.js"></script>
+  <script src="src/scoreEngine/rules/scorerRule.js"></script>
+  <script src="src/scoreEngine/rules/matchDecisionRule.js"></script>
+  <script src="src/scoreEngine/rules/overPredictionRule.js"></script>
 
- <script src="src/model/matchFactory.js"></script>
+  <script src="src/model/matchFactory.js"></script>
 
-<!-- Data Feed -->
- <script src="src/config/config.js"></script>
- <script src="src/http/httpClient.js"></script>
- <script src="src/cache/cacheKeys.js"></script>
- <script src="src/cache/cacheService.js"></script>
-<script src="src/providers/mockProvider.js"></script>
-<script src="src/providers/openFootballMapper.js"></script>
-<script src="src/providers/openFootballProvider.js"></script>
-<script src="src/providers/providerFactory.js"></script>
-<script src="src/services/footballDataProvider.js"></script>
-<script src="src/services/syncService.js"></script>
+  <!-- Data Feed -->
+  <script src="src/config/config.js"></script>
+  <script src="src/http/httpClient.js"></script>
+  <script src="src/cache/cacheKeys.js"></script>
+  <script src="src/cache/cacheService.js"></script>
+  <script src="src/providers/mockProvider.js"></script>
+  <script src="src/providers/openFootballMapper.js"></script>
+  <script src="src/providers/openFootballProvider.js"></script>
+  <script src="src/providers/providerFactory.js"></script>
+  <script src="src/services/footballDataProvider.js"></script>
+  <script src="src/services/syncService.js"></script>
 
-<script src="app.js"></script>
+  <script src="src/dev/developerTools.js"></script>
 
-<script src="src/dev/testRunner.js"></script>
-<script src="src/dev/testUtils.js"></script>
-<script src="src/dev/tests/matchTests.js"></script>
+  <script src="app.js"></script>
+
+  <script src="src/dev/testRunner.js"></script>
+  <script src="src/dev/testUtils.js"></script>
+  <script src="src/dev/tests/matchTests.js"></script>
 </body>
 
 </html>

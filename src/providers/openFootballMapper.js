@@ -178,14 +178,14 @@ const OpenFootballMapper = {
             case "Round of 16":
                 return "ROUND_OF_16";
 
-            case "Quarter-finals":
+            case "Quarter-final":
                 return "QUARTER_FINAL";
 
-            case "Semi-finals":
+            case "Semi-final":
                 return "SEMI_FINAL";
 
-            case "Third-place match":
-                return "THIRD_PLACE";
+            case "Match for third place":
+                return "FINAL";
 
             case "Final":
                 return "FINAL";

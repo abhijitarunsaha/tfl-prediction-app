@@ -8,7 +8,9 @@ const Config = {
 
         cacheEnabled: true
 
-    }
+    },
+
+    developerMode: true
 
 };
 

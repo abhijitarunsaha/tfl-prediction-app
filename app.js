@@ -1,13 +1,4 @@
-const contestants = ["Kaustav", "Durbar", "Jeet", "Sayantan", "Santanu", "Abhijit"];
-
-const baseScores = {
-  Kaustav: 1290,
-  Durbar: 1220,
-  Santanu: 1140,
-  Abhijit: 1010,
-  Sayantan: 830,
-  Jeet: 680
-};
+let contestants = [];
 
 const storageKey = "tfl-fifa26-prediction-state-v1";
 let state = loadState();
@@ -15,10 +6,63 @@ let activeMatchId = null;
 
 initializeApplication();
 
+document
+
+  .getElementById("sync-btn")
+
+  .addEventListener(
+
+    "click",
+
+    async () => {
+
+      const button =
+
+        document.getElementById(
+          "sync-btn"
+        );
+
+      button.classList.add(
+        "syncing"
+      );
+
+      button.textContent =
+        "Syncing...";
+
+      try {
+
+        await SyncService.sync();
+
+        await SyncService.refreshLastSync();
+
+      }
+      finally {
+
+        button.classList.remove(
+          "syncing"
+        );
+
+        button.textContent = "✔ Synced";
+
+        setTimeout(() => {
+
+          button.textContent = "🔄 Sync";
+
+        }, 2000);
+
+      }
+
+    }
+
+  );
+
 async function initializeApplication() {
 
   state.matches =
     await SyncService.loadTournament();
+
+  contestants =
+    await ContestantRepository.getAll();
 
   renderMatches();
 
@@ -26,7 +70,55 @@ async function initializeApplication() {
 
   await SyncService.sync();
 
+  localStorage.setItem(
+
+    "tfl-last-sync",
+
+    new Date().toISOString()
+
+  );
+
+  await SyncService.refreshLastSync();
+
   SyncService.start();
+
+  if (
+
+    DeveloperTools.enabled()
+
+  ) {
+
+    document
+
+      .getElementById(
+
+        "developer-panel"
+
+      )
+
+      .hidden = false;
+
+  }
+
+}
+
+function medal(rank) {
+
+  switch (rank) {
+
+    case 0:
+      return "🥇";
+
+    case 1:
+      return "🥈";
+
+    case 2:
+      return "🥉";
+
+    default:
+      return `${rank + 1}.`;
+
+  }
 
 }
 
@@ -53,8 +145,8 @@ function loadState() {
 
     tournamentPredictions:
       Object.fromEntries(
-        contestants.map(name => [
-          name,
+        contestants.map(contestant => [
+          contestant.name,
           defaultTournamentPrediction()
         ])
       ),
@@ -78,7 +170,7 @@ async function getTeamPlayers(teamName) {
 
 function reconcileState(savedState) {
   savedState.matches =
-        savedState.matches || [];
+    savedState.matches || [];
   savedState.tournamentActuals = {
     goldenBoot: "",
     goldenGlove: "",
@@ -89,7 +181,7 @@ function reconcileState(savedState) {
     ...(savedState.tournamentActuals || {})
   };
   savedState.tournamentPredictions = {
-    ...Object.fromEntries(contestants.map((name) => [name, defaultTournamentPrediction()])),
+    ...Object.fromEntries(contestants.map((contestant) => [contestant.name, defaultTournamentPrediction()])),
     ...(savedState.tournamentPredictions || {})
   };
   savedState.overrides = savedState.overrides || {};
@@ -231,19 +323,19 @@ function scoreTournament(name) {
 }
 
 function totals() {
-  return contestants.map((name) => {
-    const matchPoints = state.matches.reduce((sum, match) => sum + scoreMatch(match, name).total, 0);
-    const tournamentPoints = scoreTournament(name);
+  return contestants.map((contestant) => {
+    const matchPoints = state.matches.reduce((sum, match) => sum + scoreMatch(match, contestant.name).total, 0);
+    const tournamentPoints = scoreTournament(contestant.name);
     const currentWeek = state.matches
       .filter((match) => new Date(match.kickoff) >= new Date("2026-06-26") && new Date(match.kickoff) < new Date("2026-07-03"))
-      .reduce((sum, match) => sum + scoreMatch(match, name).total, 0);
+      .reduce((sum, match) => sum + scoreMatch(match, contestant.name).total, 0);
     return {
-      name,
-      base: baseScores[name],
+      name: contestant.name,
+      base: contestant.startingPoints ?? 0,
       matchPoints,
       tournamentPoints,
       weekly: currentWeek,
-      total: baseScores[name] + matchPoints + tournamentPoints
+      total: (contestant.startingPoints) + matchPoints + tournamentPoints
     };
   }).sort((a, b) => b.total - a.total);
 }
@@ -256,10 +348,10 @@ function renderDashboard() {
 
   byId("leaderboard").innerHTML = rows.map((row, index) => `
     <div class="leader-row">
-      <div class="rank">${index + 1}</div>
+      <div class="rank">${medal(index)}</div>
       <div>
         <p class="player-name">${row.name}</p>
-        <p class="subtext">Base ${row.base} | Match ${signed(row.matchPoints)} | Futures ${signed(row.tournamentPoints)}</p>
+        <!-- <p class="subtext">Base ${row.base} | Match ${signed(row.matchPoints)} | Futures ${signed(row.tournamentPoints)}</p> -->
       </div>
       <div class="points">${row.total}</div>
     </div>
@@ -277,17 +369,94 @@ function signed(value) {
   return value > 0 ? `+${value}` : String(value);
 }
 
+function filterMatches(matches, filter) {
+
+  switch (filter) {
+
+    case "UPCOMING":
+
+      return matches.filter(match =>
+        !isCompleted(match)
+      );
+
+    case "PAST":
+
+      return matches.filter(match =>
+        isCompleted(match)
+      );
+
+    case "GROUP":
+
+      return matches.filter(match =>
+        match.stage === "GROUP"
+      );
+
+    case "ROUND_OF_32":
+
+      return matches.filter(match =>
+        match.stage === "ROUND_OF_32"
+      );
+
+    case "ROUND_OF_16":
+
+      return matches.filter(match =>
+        match.stage === "ROUND_OF_16"
+      );
+
+    case "QUARTER_FINAL":
+
+      return matches.filter(match =>
+        match.stage === "QUARTER_FINAL"
+      );
+
+    case "SEMI_FINAL":
+
+      return matches.filter(match =>
+        match.stage === "SEMI_FINAL"
+      );
+
+    case "FINAL":
+
+      return matches.filter(match =>
+        match.stage === "FINAL"
+      );
+
+    default:
+
+      return matches;
+
+  }
+
+}
+
+function isCompleted(match) {
+
+  return (
+
+    match.actual &&
+    match.actual.homeGoalsFinal !== null &&
+    match.actual.homeGoalsFinal !== undefined &&
+    match.actual.awayGoalsFinal !== ""
+
+  );
+
+}
+
 function renderMatches() {
-  const rounds = ["All", ...new Set(state.matches.map((match) => match.round))];
-  const current = byId("roundFilter").value || "All";
+  const rounds = ["All", "UPCOMING", "PAST", ...new Set(state.matches.map((match) => match.stage))];
+  const current = byId("roundFilter").value || "UPCOMING";
   byId("roundFilter").innerHTML = rounds.map((round) => `<option ${round === current ? "selected" : ""}>${round}</option>`).join("");
-  const filtered = current === "All" ? state.matches : state.matches.filter((match) => match.round === current);
+  const filtered = current === "All" ? state.matches : filterMatches(state.matches, current);
   byId("matchList").innerHTML = filtered.map((match) => {
-    const hasResult = match.actual.homeGoals !== "" && match.actual.awayGoals !== "";
+    const hasResult =
+
+      match.actual?.homeGoalsFinal !== "" &&
+
+      match.actual?.awayGoalsFinal !== "";
     return `
       <article class="match-card ${hasResult ? "complete" : ""}">
         <div>
-          <div class="teams"><span>${match.home}</span><span class="badge">${hasResult ? `${match.actual.homeGoals}-${match.actual.awayGoals}` : "vs"}</span><span>${match.away}</span></div>
+          <div class="teams"><span>${match.home}</span><span class="badge">${hasResult ? `${match.actual.homeGoalsFinal} - ${match.actual.awayGoalsFinal}` : "vs"}</span><span>${match.away}</span></div>
           <p class="subtext">${match.round} | ${formatDate(match.kickoff)} | ${submittedCount(match)} predictions</p>
         </div>
         <button class="primary-button" data-edit-match="${match.id}">Open</button>
@@ -297,28 +466,28 @@ function renderMatches() {
 }
 
 function submittedCount(match) {
-  return contestants.filter((name) => {
-    const prediction = match.predictions[name] || {};
+  return contestants.filter((contestant) => {
+    const prediction = match.predictions[contestant.name] || {};
     return prediction.homeGoals !== "" && prediction.homeGoals !== undefined && prediction.awayGoals !== "" && prediction.awayGoals !== undefined;
   }).length;
 }
 
 function formatDate(value) {
 
-    if (!value)
-        return "-";
+  if (!value)
+    return "-";
 
-    return new Intl.DateTimeFormat(
-        "en-IN",
-        {
+  return new Intl.DateTimeFormat(
+    "en-IN",
+    {
 
-            dateStyle: "medium",
+      dateStyle: "medium",
 
-            timeStyle: "short"
+      timeStyle: "short"
 
-        }
+    }
 
-    ).format(new Date(value));
+  ).format(new Date(value));
 
 }
 
@@ -381,8 +550,8 @@ async function renderMatchDialog() {
         <button class="text-button" type="button" data-calc-match="${match.id}">Calculate Match</button>
       </div>
       <div class="result-grid">
-        <label>${match.home} goals<input class="input" data-result="homeGoals" type="number" min="0" value="${match.actual.homeGoals}"></label>
-        <label>${match.away} goals<input class="input" data-result="awayGoals" type="number" min="0" value="${match.actual.awayGoals}"></label>
+        <label>${match.home} goals<input class="input" data-result="homeGoals" type="number" min="0" value="${match.actual.homeGoalsFinal}"></label>
+        <label>${match.away} goals<input class="input" data-result="awayGoals" type="number" min="0" value="${match.actual.awayGoalsFinal}"></label>
         ${showMatchDecision ? `<label>
 
 Match Decision
@@ -407,11 +576,11 @@ data-result="matchDecision">
         <label class="full-span">Own goals<textarea class="input" data-result="ownGoals" rows="2" placeholder="Comma separated">${match.actual.ownGoals}</textarea></label>
       </div>
     </section>
-    ${contestants.map((name) => predictionCard(
+    ${contestants.map((contestant) => predictionCard(
 
     match,
 
-    name,
+    contestant.name,
 
     homeScorerOptions,
 
@@ -592,7 +761,8 @@ function saveActiveMatch() {
   document.querySelectorAll("[data-result]").forEach((field) => {
     match.actual[field.dataset.result] = field.value;
   });
-  contestants.forEach((name) => {
+  contestants.forEach((contestant) => {
+    const name = contestant.name;
     const next = match.predictions[name] || {};
     document.querySelectorAll(`[data-player="${name}"]`).forEach((field) => {
       next[field.dataset.field] = field.value;
@@ -614,7 +784,8 @@ function renderTournament() {
   byId("actualSemiFinalists").value = state.tournamentActuals.semiFinalists || "";
   byId("actualFinalists").value = state.tournamentActuals.finalists || "";
 
-  byId("tournamentGrid").innerHTML = contestants.map((name) => {
+  byId("tournamentGrid").innerHTML = contestants.map((contestant) => {
+    const name = contestant.name;
     const pred = state.tournamentPredictions[name] || defaultTournamentPrediction();
     return `
       <section class="contestant-card">
@@ -820,9 +991,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await testSupabaseConnection();
 
-  /*const leaderboard =
-    await leaderboardRepository.getLeaderboard();
-
-  console.table(leaderboard);*/
-
 });
+
+window.App = {
+
+  refresh() {
+
+    saveState();
+
+    renderAll();
+
+  },
+
+  loadState,
+
+  renderDashboard,
+
+  renderMatches,
+
+  openMatchDialog
+
+};
