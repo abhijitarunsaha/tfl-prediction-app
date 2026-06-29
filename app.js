@@ -128,14 +128,16 @@ async function initializeApplication() {
 
   await loadContestants();
 
+  await SyncService.sync();
+
   state.matches =
     await SyncService.loadTournament();
 
   initialisePredictionContainers();
 
-  await SyncService.sync();
-
   await loadPredictionsFromDatabase();
+
+  await loadPointBreakdowns();
 
   renderMatches();
 
@@ -226,12 +228,96 @@ function loadState() {
 
     overrides: {},
 
+    pointBreakdowns: [],
+
+    calculatedTotals: {},
+
     settings: {
       apiEndpoint: "",
       apiKey: ""
     }
 
   };
+
+}
+
+async function loadPointBreakdowns() {
+
+    state.pointBreakdowns =
+
+        await PointBreakdownRepository
+
+            .getAll()
+
+        ?? [];
+
+    const contestants =
+
+        await ContestantRepository
+
+            .getContestants();
+
+    const contestantMap =
+
+        Object.fromEntries(
+
+            contestants.map(
+
+                contestant => [
+
+                    contestant.id,
+
+                    contestant.name
+
+                ]
+
+            )
+
+        );
+
+    state.calculatedTotals = {};
+
+    Object.values(
+
+        contestantMap
+
+    ).forEach(
+
+        name =>
+
+            state.calculatedTotals[name] = 0
+
+    );
+
+    state.pointBreakdowns.forEach(
+
+        row => {
+
+            const contestant =
+
+                contestantMap[
+
+                    row.predictions
+
+                        .contestant_id
+
+                ];
+
+            if (!contestant)
+
+                return;
+
+            state.calculatedTotals[
+
+                contestant
+
+            ] +=
+
+                row.total_points ?? 0;
+
+        }
+
+    );
 
 }
 
@@ -339,6 +425,9 @@ async function loadPredictionsFromDatabase() {
     match.predictions[contestant] = {
 
       ...match.predictions[contestant],
+
+      databaseId:
+        prediction.id,
 
       homeGoals:
         prediction.predicted_home_goals ?? "",
@@ -512,10 +601,10 @@ function scoreMatch(match, name) {
   }
 
   if (
-    match.actual.homeGoals === "" ||
-    match.actual.awayGoals === "" ||
-    match.actual.homeGoals === undefined ||
-    match.actual.awayGoals === undefined
+    match.actual.homeGoalsFinal === "" ||
+    match.actual.awayGoalsFinal === "" ||
+    match.actual.homeGoalsFinal === undefined ||
+    match.actual.awayGoalsFinal === undefined
   ) {
     return {
       total: 0,
@@ -561,7 +650,11 @@ function scoreTournament(name) {
 
 function totals() {
   return contestants.map((name) => {
-    const matchPoints = state.matches.reduce((sum, match) => sum + scoreMatch(match, name).total, 0);
+    const matchPoints =
+
+    state.calculatedTotals[name]
+
+    ?? 0;
     const tournamentPoints = scoreTournament(name);
     const currentWeek = state.matches
       .filter((match) => new Date(match.kickoff) >= new Date("2026-06-26") && new Date(match.kickoff) < new Date("2026-07-03"))
@@ -1033,17 +1126,23 @@ async function saveActiveMatch() {
     const override = document.querySelector(`[data-override="${name}"]`).value;
     state.overrides[`${match.id}:${name}`] = override;
 
-    await PredictionRepository.saveMatchPrediction(
+    const savedPrediction =
+      await PredictionRepository.saveMatchPrediction(
+        name,
+        match,
+        match.predictions[name]
+      );
 
-      name,
+    if (savedPrediction) {
 
-      match,
+      match.predictions[name].databaseId =
+        savedPrediction.id;
 
-      match.predictions[name]
-
-    );
+    }
   });
   saveState();
+  await CalculationService.calculateTournament();
+  await loadPointBreakdowns();
   renderAll();
   showSnack("Match saved and table refreshed");
 }
@@ -1082,7 +1181,7 @@ function renderTournament() {
   }).join("");
 }
 
-function saveTournament() {
+async function saveTournament() {
   state.tournamentActuals.goldenBoot = byId("actualGoldenBoot").value;
   state.tournamentActuals.goldenGlove = byId("actualGoldenGlove").value;
   state.tournamentActuals.goldenBall = byId("actualGoldenBall").value;
@@ -1095,6 +1194,8 @@ function saveTournament() {
     state.tournamentPredictions[name][field.dataset.field] = field.value;
   });
   saveState();
+  await CalculationService.calculateTournament();
+  await loadPointBreakdowns();
   renderAll();
   showSnack("Tournament predictions saved");
 }
@@ -1114,6 +1215,8 @@ async function syncResults() {
     const data = await response.json();
     applyExternalResults(data);
     saveState();
+    await CalculationService.calculateTournament();
+    await loadPointBreakdowns();
     renderAll();
     byId("syncStatus").textContent = "Results synced. Check matches before calculating.";
   } catch (error) {
@@ -1168,10 +1271,12 @@ document.addEventListener("click", async (event) => {
   const editButton = event.target.closest("[data-edit-match]");
   if (editButton) await openMatchDialog(editButton.dataset.editMatch);
   if (event.target.closest("#recalculateAllButton")) {
+    await CalculationService.calculateTournament();
+    await loadPointBreakdowns();
     renderAll();
     showSnack("Leaderboard recalculated");
   }
-  if (event.target.closest("#calculateTournamentButton")) saveTournament();
+  if (event.target.closest("#calculateTournamentButton")) await saveTournament();
   if (event.target.closest("#exportButton")) exportData();
   if (event.target.closest("[data-calc-match]")) {
     await saveActiveMatch();
@@ -1179,7 +1284,7 @@ document.addEventListener("click", async (event) => {
   }
 });
 
-document.addEventListener("change", (event) => {
+document.addEventListener("change", async (event) => {
   if (event.target.id === "roundFilter") renderMatches();
   // Home team scorer dropdown
   const homeScorer = event.target.closest("[data-home-scorer-select]");
@@ -1256,6 +1361,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => { });
 }
 
+//await CalculationService.calculateTournament();
 renderAll();
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1270,6 +1376,7 @@ window.App = {
 
     saveState();
 
+    //await CalculationService.calculateTournament();
     renderAll();
 
   },

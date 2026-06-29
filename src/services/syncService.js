@@ -144,11 +144,22 @@ const SyncService = {
         const cached =
             localStorage.getItem("tfl-fixtures");
 
-        if (cached)
-            return JSON.parse(cached);
+        if (cached) {
+            const fixtures =
+                JSON.parse(cached);
+
+            await MatchRepository.mapDatabaseIds(fixtures);
+
+            return fixtures;
+        }
+
 
         const fixtures =
             await FootballDataProvider.getFixtures();
+
+        await MatchRepository.upsertFixtures(fixtures);
+
+        await MatchRepository.mapDatabaseIds(fixtures);
 
         localStorage.setItem(
 
