@@ -1,25 +1,31 @@
-const leaderboardRepository = {
+const LeaderboardRepository = {
 
-    async getLeaderboard() {
+    async getContestants() {
 
-        const contestants =
-            await contestantRepository.getAll();
+        return ContestantRepository.getContestants();
 
-        return contestants.map(c => ({
+    },
 
-            id: c.id,
+    async getPredictions() {
 
-            name: c.name,
+        const data =
+            await RepositoryBase.execute(
 
-            points:
-                c.startingPoints
+                supabaseClient
 
-        }))
-        .sort((a,b)=>b.points-a.points);
+                    .from("predictions")
+
+                    .select("*"),
+
+                "Loading predictions"
+
+            );
+
+        return data ?? [];
 
     }
 
 };
 
-window.leaderboardRepository =
-    leaderboardRepository;
+window.LeaderboardRepository =
+    LeaderboardRepository;

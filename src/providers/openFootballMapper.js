@@ -58,29 +58,7 @@ const OpenFootballMapper = {
             away:
                 match.team2,
 
-            predictions:
-
-                Object.fromEntries(
-
-                    contestants.map(name => [
-
-                        name,
-
-                        {
-
-                            homeGoals: "",
-
-                            awayGoals: "",
-
-                            scorers: "",
-
-                            matchDecision: ""
-
-                        }
-
-                    ])
-
-                ),
+            predictions: {},
 
             actual: {
 
@@ -91,7 +69,10 @@ const OpenFootballMapper = {
                     match.score?.ft?.[1] ?? "",
 
                 scorers:
-                    this.mapScorers(match)
+                    this.mapScorers(match),
+
+                matchDecision:
+                    this.mapMatchDecision(match)
 
             }
 
@@ -194,6 +175,21 @@ const OpenFootballMapper = {
                 return "GROUP";
 
         }
+
+    },
+
+    mapMatchDecision(match) {
+
+        if (!match.score)
+            return "";
+
+        if (match.score.et)
+            return "ET";
+
+        if (match.score.p)
+            return "PEN";
+
+        return "90";
 
     }
 

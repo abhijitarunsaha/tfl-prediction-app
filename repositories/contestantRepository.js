@@ -1,12 +1,15 @@
 const ContestantRepository = {
 
-    async getAll() {
+    async getContestants() {
 
-        const { data, error } = await supabaseClient
+        const data =
+            await RepositoryBase.execute(
 
-            .from("contestants")
+                supabaseClient
 
-            .select(`
+                    .from("contestants")
+
+                    .select(`
                 id,
                 name,
                 baseline_scores (
@@ -14,29 +17,46 @@ const ContestantRepository = {
                 )
             `)
 
-            .order("name");
+                    .order("name"),
 
-        if (error) {
+                "Loading contestants"
 
-            console.error(
-                "Unable to load contestants",
-                error
             );
 
+        if (!data)
             return [];
-
-        }
 
         return data.map(contestant => ({
 
-            id: contestant.id,
+            id:
+                contestant.id,
 
-            name: contestant.name,
+            name:
+                contestant.name,
 
-            startingPoints:
-                contestant.baseline_scores?.starting_points ?? 0
+            baselineScore:
+
+                Array.isArray(contestant.baseline_scores)
+
+                    ? contestant.baseline_scores[0]?.starting_points ?? 0
+
+                    : contestant.baseline_scores?.starting_points ?? 0
 
         }));
+
+    },
+
+    async getContestantByName(name) {
+
+        const contestants =
+            await this.getContestants();
+
+        return contestants.find(
+
+            contestant =>
+                contestant.name === name
+
+        );
 
     }
 

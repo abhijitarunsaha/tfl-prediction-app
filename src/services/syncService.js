@@ -4,31 +4,87 @@ const SyncService = {
 
     async sync() {
 
-        console.log("Syncing tournament...");
+        try {
 
-        const fixtures =
-            await FootballDataProvider.getFixtures();
+            console.log("Syncing tournament...");
 
-        if (!fixtures.length)
+            const fixtures =
+                await FootballDataProvider.getFixtures();
+
+            await MatchRepository.upsertFixtures(fixtures);
+
+            await MatchRepository.mapDatabaseIds(fixtures);
+
+            if (!fixtures.length)
+                return false;
+
+            localStorage.setItem(
+
+                "tfl-fixtures",
+
+                JSON.stringify(fixtures)
+
+            );
+
+            localStorage.setItem(
+
+                "tfl-last-sync",
+
+                new Date().toISOString()
+
+            );
+
+            await ProviderSyncRepository.update({
+
+                lastSync:
+                    new Date().toISOString(),
+
+                version:
+                    FootballDataProvider.getProviderInfo
+                        ? await FootballDataProvider.getProviderInfo()
+                        : "OpenFootball",
+
+                updatedMatches:
+                    fixtures.length,
+
+                lastStatus:
+                    "SUCCESS",
+
+                lastError:
+                    null
+
+            });
+
+            return true;
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            await ProviderSyncRepository.update({
+
+                lastSync:
+                    null,
+
+                version:
+                    "OpenFootball",
+
+                updatedMatches:
+                    0,
+
+                lastStatus:
+                    "FAILED",
+
+                lastError:
+                    error.message
+
+            });
+
             return false;
 
-        localStorage.setItem(
-
-            "tfl-fixtures",
-
-            JSON.stringify(fixtures)
-
-        );
-
-        localStorage.setItem(
-
-            "tfl-last-sync",
-
-            new Date().toISOString()
-
-        );
-
-        return true;
+        }
 
     },
 

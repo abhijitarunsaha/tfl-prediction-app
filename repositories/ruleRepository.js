@@ -1,33 +1,50 @@
-const ruleRepository = {
+const RuleRepository = {
 
-    cache: {},
+    async getRules() {
 
-    async load() {
+        const data =
+            await RepositoryBase.execute(
 
-        const { data, error } =
-            await window.supabaseClient
-                .from("v_rule_configuration")
-                .select("*");
+                supabaseClient
 
-        if (error)
-            throw error;
+                    .from("rule_configuration")
 
-        this.cache = {};
+                    .select("*")
 
-        data.forEach(r => {
+                    .order("rule_name"),
 
-            this.cache[r.rule_name] = r.rule_value;
+                "Loading rules"
 
-        });
+            );
+
+        return data ?? [];
 
     },
 
-    get(ruleName) {
+    async getRule(name) {
 
-        return this.cache[ruleName];
+        const data =
+            await RepositoryBase.execute(
+
+                supabaseClient
+
+                    .from("rule_configuration")
+
+                    .select("*")
+
+                    .eq("rule_name", name)
+
+                    .single(),
+
+                "Loading rule"
+
+            );
+
+        return data;
 
     }
 
 };
 
-window.ruleRepository = ruleRepository;
+window.RuleRepository =
+    RuleRepository;

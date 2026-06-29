@@ -102,16 +102,24 @@ class OpenFootballProvider {
 
         }
 
+        const fixtures =
+            OpenFootballMapper.mapFixtures(
+                response.data.matches
+            );
+
+        fixtures.forEach((match, index) => {
+
+            match.matchNumber = index + 1;
+
+        });
+
         return {
 
             name: response.data.name,
 
-            matches:
-                OpenFootballMapper
-                    .mapFixtures(response.data.matches)
-                    .map(match =>
-                        MatchFactory.create(match)
-                    )
+            matches: fixtures.map(match =>
+                MatchFactory.create(match)
+            )
 
         };
 

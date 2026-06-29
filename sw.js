@@ -15,50 +15,59 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", event => {
 
-  const url =
-    new URL(event.request.url);
+    const url =
+        new URL(event.request.url);
 
-  if (
+    if (
 
-    url.protocol !== "http:" &&
-    url.protocol !== "https:"
+        event.request.method !== "GET" ||
 
-  ) {
+        url.hostname.includes("supabase.co")
 
-    return;
+    ) {
 
-  }
+        event.respondWith(
 
-  event.respondWith(
+            fetch(event.request)
 
-    fetch(event.request)
+        );
 
-      .then(response => {
+        return;
 
-        const copy =
-          response.clone();
+    }
 
-        caches.open(cacheName)
+    event.respondWith(
 
-          .then(cache =>
+        fetch(event.request)
 
-            cache.put(
-              event.request,
-              copy
+            .then(response => {
+
+                const copy =
+                    response.clone();
+
+                caches
+                    .open(cacheName)
+                    .then(cache =>
+
+                        cache.put(
+                            event.request,
+                            copy
+                        )
+
+                    );
+
+                return response;
+
+            })
+
+            .catch(() =>
+
+                caches.match(
+                    event.request
+                )
+
             )
 
-          );
-
-        return response;
-
-      })
-
-      .catch(() =>
-
-        caches.match(event.request)
-
-      )
-
-  );
+    );
 
 });

@@ -25,3 +25,18 @@ async function testSupabaseConnection() {
     console.log("✅ Supabase Connected");
 
 }
+
+async function healthCheck() {
+
+    const { error } =
+        await tflSupabase
+            .from("contestants")
+            .select("id")
+            .limit(1);
+
+    return !error;
+
+}
+
+window.SupabaseHealthCheck =
+    healthCheck;
