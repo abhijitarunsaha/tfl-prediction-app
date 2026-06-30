@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#052f5f">
-  <title>TFL FIFA 26 Predictions</title>
+  <meta name="theme-color" content="#060b14">
+  <title>The Thek Football Predictor League</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,42 +13,55 @@
 <body>
   <div class="app-shell">
     <header class="top-app-bar">
-      <div class="brand-mark" aria-hidden="true">TFL</div>
-      <div>
+      <button class="brand-logo" data-go-home aria-label="Go to dashboard">
+        <img src="assets/tfl-logo.jpeg" alt="The Thek Football League crest">
+      </button>
+      <div class="top-app-bar-text">
         <p class="eyebrow">FIFA World Cup 2026</p>
-        <h1>Thek Football League</h1>
+        <h1>TFPL</h1>
+        <p class="brand-fullname">The Thek Football Predictor League</p>
       </div>
       <div id="sync-status" class="sync-status">
-
-        Last synced:
-        <span id="last-sync">
-
-          Never
-
-        </span>
-        <button id="sync-btn" class="primary-button" title="Synchronize tournament data">
-
-          🔄 Sync
-
+        <button id="sync-btn" class="sync-icon-button" title="Synchronize tournament data" aria-label="Sync">
+          <span class="material-icon" data-icon="↻">sync</span>
         </button>
-
+        <span class="sync-timestamp">Last synced: <span id="last-sync">Never</span></span>
       </div>
-
+      <button id="menu-toggle" class="hamburger-button" aria-label="Open menu" aria-expanded="false" aria-controls="sideMenu">
+        <span></span><span></span><span></span>
+      </button>
     </header>
 
-    <nav class="tabs" aria-label="Main sections">
-      <button class="tab active" data-view="dashboard">Dashboard</button>
-      <button class="tab" data-view="matches">Matches</button>
-      <button class="tab" data-view="overall">Tournament Picks</button>
-      <button class="tab" data-view="overall">Tournament Rules</button>
+    <div id="menuOverlay" class="menu-overlay" hidden></div>
+    <nav id="sideMenu" class="side-menu" aria-label="Main sections">
+      <div class="side-menu-header">
+        <div class="brand-logo small" aria-hidden="true">
+          <img src="assets/tfl-logo.jpeg" alt="">
+        </div>
+        <div>
+          <p class="eyebrow">TFPL</p>
+          <p class="side-menu-subtitle">The Thek Football Predictor League</p>
+        </div>
+        <button id="menu-close" class="icon-button" aria-label="Close menu">
+          <span class="material-icon" data-icon="x">close</span>
+        </button>
+      </div>
+      <button class="tab active" data-view="dashboard"><span class="tab-icon">🏆</span> Dashboard</button>
+      <button class="tab" data-view="matches"><span class="tab-icon">⚽</span> Matches</button>
+      <button class="tab" data-view="overall"><span class="tab-icon">🎯</span> Tournament Picks</button>
+      <button class="tab" data-view="rules"><span class="tab-icon">📋</span> Tournament Rules</button>
     </nav>
 
     <main>
       <section class="view active" id="dashboardView">
         <section class="hero-panel">
           <div>
-            <p class="eyebrow">Thek Football League</p>
+            <p class="eyebrow">The Thek Football Predictor League</p>
             <h2>"For the love of the beautiful game..."</h2>
+            <button class="primary-button hero-cta" type="button" data-goto-view="matches" data-round-filter="UPCOMING">
+              <span class="material-icon" data-icon="⚽">ball</span>
+              Upcoming Matches… Predict Now!
+            </button>
           </div>
           <div class="hero-ball" aria-hidden="true"></div>
         </section>
@@ -141,7 +154,7 @@
         </section>
       </section>
 
-      <section class="view" id="overallView">
+      <section class="view" id="rulesView">
         <section class="panel">
           <div class="section-title">
             <div>
@@ -547,32 +560,9 @@
       <div class="dialog-content" id="dialogContent"></div>
       <div class="dialog-actions">
         <button class="text-button" value="cancel">Close</button>
-        <button class="primary-button" id="saveMatchButton" value="default">Save</button>
       </div>
     </form>
   </dialog>
-
-  <div id="developer-panel" hidden>
-
-    <button id="clone-match">
-
-      Clone Match
-
-    </button>
-
-    <button id="reset-cache">
-
-      Clear Cache
-
-    </button>
-
-    <button id="run-regression">
-
-      Regression
-
-    </button>
-
-  </div>
 
   <div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -63,21 +63,62 @@ const OpenFootballMapper = {
             actual: {
 
                 homeGoalsFinal:
-                    match.score?.ft?.[0] ?? "",
+                    this.calculateFinalHomeGoals(match),
 
                 awayGoalsFinal:
-                    match.score?.ft?.[1] ?? "",
+                    this.calculateFinalAwayGoals(match),
 
                 scorers:
                     this.mapScorers(match),
 
+                matchOutcome:
+                    this.calculateMatchOutcome(match),
+
                 matchDecision:
                     this.mapMatchDecision(match)
-
             }
 
         };
 
+    },
+
+    calculateFinalHomeGoals(match) {
+        if (!match.score || match.score === undefined || match.score === null || match.score === "")
+            return "";
+
+        if (match.score.et)
+            return match.score?.et?.[0] ?? "";
+
+        return match.score?.ft?.[0] ?? "";
+    },
+
+    calculateFinalAwayGoals(match) {
+        if (!match.score || match.score === undefined || match.score === null || match.score === "")
+            return "";
+
+        if (match.score.et)
+            return match.score?.et?.[1] ?? "";
+
+        return match.score?.ft?.[1] ?? "";
+    },
+
+    calculateMatchOutcome(match) {
+        const home = this.calculateFinalHomeGoals(match);
+        const away = this.calculateFinalAwayGoals(match);
+        if (home === "" || away === "" || home === undefined || away === undefined) {
+            return "TBD";
+        }
+        if (match.score.p) {
+            const homePenalties = Number(match.score?.p?.[0]) ?? 0;
+            const awayPenalties = Number(match.score?.p?.[1]) ?? 0;
+            if (homePenalties > awayPenalties) return "HOME";
+            if (awayPenalties > homePenalties) return "AWAY";
+        }
+        const homeGoals = Number(home);
+        const awayGoals = Number(away);
+        if (homeGoals > awayGoals) return "HOME";
+        if (awayGoals > homeGoals) return "AWAY";
+        return "DRAW";
     },
 
     mapKickoff(match) {
@@ -183,11 +224,11 @@ const OpenFootballMapper = {
         if (!match.score)
             return "";
 
-        if (match.score.et)
-            return "ET";
-
         if (match.score.p)
             return "PEN";
+
+        if (match.score.et)
+            return "ET";
 
         return "90";
 

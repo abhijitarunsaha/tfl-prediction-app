@@ -25,7 +25,7 @@ class ResultRule extends BaseRule {
         const actual =
             ScoreEngine.getActualScore(match);
 
-        const predictedResult =
+        /*const predictedResult =
             ScoreEngine.getResult(
                 predicted.home,
                 predicted.away
@@ -35,15 +35,18 @@ class ResultRule extends BaseRule {
             ScoreEngine.getResult(
                 actual.home,
                 actual.away
-            );
+            );*/
 
-        if (predictedResult === actualResult) {
+        const predictedOutcome = ScoreEngine.getPredictedOutcome(prediction);
+        const actualOutcome = ScoreEngine.getActualOutcome(match);
+
+        if (predictedOutcome === actualOutcome) {
 
             return this.success(
                 20,
                 {
-                    predictedResult,
-                    actualResult
+                    predictedOutcome,
+                    actualOutcome
                 }
             );
 
@@ -52,8 +55,8 @@ class ResultRule extends BaseRule {
         return this.failure(
             -10,
             {
-                predictedResult,
-                actualResult
+                predictedOutcome,
+                actualOutcome
             }
         );
 

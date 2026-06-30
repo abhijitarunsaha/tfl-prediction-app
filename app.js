@@ -112,6 +112,8 @@ function initialisePredictionContainers() {
 
           matchDecision: "",
 
+          matchOutcome: "",
+
           submitted: false
 
         };
@@ -158,21 +160,11 @@ async function initializeApplication() {
   SyncService.start();
 
   if (
-
     DeveloperTools.enabled()
-
   ) {
-
     document
-
-      .getElementById(
-
-        "developer-panel"
-
-      )
-
-      .hidden = false;
-
+      .getElementById("developer-panel")
+      ?.removeAttribute("hidden");
   }
 
 }
@@ -243,81 +235,81 @@ function loadState() {
 
 async function loadPointBreakdowns() {
 
-    state.pointBreakdowns =
+  state.pointBreakdowns =
 
-        await PointBreakdownRepository
+    await PointBreakdownRepository
 
-            .getAll()
+      .getAll()
 
-        ?? [];
+    ?? [];
 
-    const contestants =
+  const contestants =
 
-        await ContestantRepository
+    await ContestantRepository
 
-            .getContestants();
+      .getContestants();
 
-    const contestantMap =
+  const contestantMap =
 
-        Object.fromEntries(
+    Object.fromEntries(
 
-            contestants.map(
+      contestants.map(
 
-                contestant => [
+        contestant => [
 
-                    contestant.id,
+          contestant.id,
 
-                    contestant.name
+          contestant.name
 
-                ]
+        ]
 
-            )
-
-        );
-
-    state.calculatedTotals = {};
-
-    Object.values(
-
-        contestantMap
-
-    ).forEach(
-
-        name =>
-
-            state.calculatedTotals[name] = 0
+      )
 
     );
 
-    state.pointBreakdowns.forEach(
+  state.calculatedTotals = {};
 
-        row => {
+  Object.values(
 
-            const contestant =
+    contestantMap
 
-                contestantMap[
+  ).forEach(
 
-                    row.predictions
+    name =>
 
-                        .contestant_id
+      state.calculatedTotals[name] = 0
 
-                ];
+  );
 
-            if (!contestant)
+  state.pointBreakdowns.forEach(
 
-                return;
+    row => {
 
-            state.calculatedTotals[
+      const contestant =
 
-                contestant
+        contestantMap[
 
-            ] +=
+        row.predictions
 
-                row.total_points ?? 0;
+          .contestant_id
 
-        }
+        ];
 
-    );
+      if (!contestant)
+
+        return;
+
+      state.calculatedTotals[
+
+        contestant
+
+      ] +=
+
+        row.total_points ?? 0;
+
+    }
+
+  );
 
 }
 
@@ -428,6 +420,9 @@ async function loadPredictionsFromDatabase() {
 
       databaseId:
         prediction.id,
+
+      matchOutcome:
+        prediction.predicted_result ?? "",
 
       homeGoals:
         prediction.predicted_home_goals ?? "",
@@ -652,9 +647,9 @@ function totals() {
   return contestants.map((name) => {
     const matchPoints =
 
-    state.calculatedTotals[name]
+      state.calculatedTotals[name]
 
-    ?? 0;
+      ?? 0;
     const tournamentPoints = scoreTournament(name);
     const currentWeek = state.matches
       .filter((match) => new Date(match.kickoff) >= new Date("2026-06-26") && new Date(match.kickoff) < new Date("2026-07-03"))
@@ -775,20 +770,24 @@ function renderMatches() {
   const rounds = ["All", "UPCOMING", "PAST", ...new Set(state.matches.map((match) => match.stage))];
   const current = byId("roundFilter").value || "UPCOMING";
   byId("roundFilter").innerHTML = rounds.map((round) => `<option ${round === current ? "selected" : ""}>${round}</option>`).join("");
-  const filtered = current === "All" ? state.matches : filterMatches(state.matches, current);
-  byId("matchList").innerHTML = filtered.map((match) => {
+  const filtered = current === "All" ? [...state.matches] : filterMatches(state.matches, current);
+  const sorted = [...filtered].sort((a, b) => {
+    const diff = new Date(a.kickoff) - new Date(b.kickoff);
+    return current === "PAST" ? -diff : diff;
+  });
+  byId("matchList").innerHTML = sorted.map((match) => {
     const hasResult =
 
       match.actual?.homeGoalsFinal !== "" &&
 
       match.actual?.awayGoalsFinal !== "";
     return `
-      <article class="match-card ${hasResult ? "complete" : ""}">
+      <article class="match-card ${hasResult ? "complete" : ""}" data-edit-match="${match.id}" role="button" tabindex="0">
         <div>
           <div class="teams"><span>${match.home}</span><span class="badge">${hasResult ? `${match.actual.homeGoalsFinal} - ${match.actual.awayGoalsFinal}` : "vs"}</span><span>${match.away}</span></div>
           <p class="subtext">${match.round} | ${formatDate(match.kickoff)} | ${submittedCount(match)} predictions</p>
         </div>
-        <button class="primary-button" data-edit-match="${match.id}">Open</button>
+        <span class="material-icon match-card-chevron" data-icon="›" aria-hidden="true">open</span>
       </article>
     `;
   }).join("");
@@ -879,11 +878,12 @@ async function renderMatchDialog() {
         <button class="text-button" type="button" data-calc-match="${match.id}">Calculate Match</button>
       </div>
       <div class="result-grid">
+        <label class="full-span">Match Outcome<input class="input" disabled value="${'HOME' === match.actual.matchOutcome ? match.home + ' won' : 'AWAY' === match.actual.matchOutcome ? match.away + ' won' : "TBD" === match.actual.matchOutcome ? "TBD" : "DRAW"}"></label>
         <label>${match.home} goals<input class="input" disabled data-result="homeGoals" type="number" min="0" value="${match.actual.homeGoalsFinal}"></label>
         <label>${match.away} goals<input class="input" disabled data-result="awayGoals" type="number" min="0" value="${match.actual.awayGoalsFinal}"></label>
         ${showMatchDecision ? `<label>
 
-Match Decision
+Match Duration
 
 <select
 class="input" disabled
@@ -929,11 +929,16 @@ data-result="matchDecision">
 
   )).join("")}
   `;
+
+  contestants.forEach((name) => refreshScorerOptions(name));
+}
+
+function escapeHtmlAttr(value) {
+  return String(value).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
 }
 
 function predictionCard(match, name, homeScorerOptions, awayScorerOptions) {
-  const prediction = match.predictions[name] || { homeGoals: "", awayGoals: "", scorers: "" };
-  const override = state.overrides[`${match.id}:${name}`] ?? "";
+  const prediction = match.predictions[name] || { homeGoals: "", awayGoals: "", scorers: "", matchOutcome: "" };
   const knockoutRounds = [
     "Round of 32",
     "Round of 16",
@@ -944,6 +949,14 @@ function predictionCard(match, name, homeScorerOptions, awayScorerOptions) {
 
   const showMatchDecision =
     knockoutRounds.includes(match.round);
+
+  const homeScorers = parseScorerPredictions(prediction.scorers).filter(
+    item => homeScorerOptions.includes(item.ownGoal ? `${item.player} (OG)` : item.player)
+  );
+  const awayScorers = parseScorerPredictions(prediction.scorers).filter(
+    item => awayScorerOptions.includes(item.ownGoal ? `${item.player} (OG)` : item.player)
+  );
+
   return `
     <section class="contestant-card">
       <h3>${name}</h3>
@@ -965,11 +978,19 @@ ${contestants
 
 </label>
       <div class="prediction-grid">
-        <label>${match.home} goals<input class="input" data-player="${name}" data-field="homeGoals" type="number" min="0" value="${prediction.homeGoals}"></label>
-        <label>${match.away} goals<input class="input" data-player="${name}" data-field="awayGoals" type="number" min="0" value="${prediction.awayGoals}"></label>
+        <label class="full-span">Match Outcome
+          <select class="input" data-player="${name}" data-field="matchOutcome">
+            <option value="" ${!prediction.matchOutcome ? "selected" : ""}>Select outcome</option>
+            <option value="HOME" ${prediction.matchOutcome === `HOME` ? "selected" : ""}>${match.home} win</option>
+            <option value="AWAY" ${prediction.matchOutcome === `AWAY` ? "selected" : ""}>${match.away} win</option>
+            <option value="DRAW" ${prediction.matchOutcome === "DRAW" ? "selected" : ""}>Draw</option>
+          </select>
+        </label>
+        <label>${match.home} goals<input class="input" data-player="${name}" data-field="homeGoals" data-goals-team="home" type="number" min="0" value="${prediction.homeGoals}"></label>
+        <label>${match.away} goals<input class="input" data-player="${name}" data-field="awayGoals" data-goals-team="away" type="number" min="0" value="${prediction.awayGoals}"></label>
         ${showMatchDecision ? `
 <label>
-    Match Decision
+    Match Duration
     <select class="input"
             data-player="${name}"
             data-field="matchDecision">
@@ -995,28 +1016,41 @@ ${contestants
     </select>
 </label>
 ` : ""}
-        <label>Manual points<input class="input" data-override="${name}" type="number" value="${override}" placeholder="Auto"></label>
         <label class="full-span">${match.home} Scorers
-          <select class="input"data-home-scorer-select="${name}">
-            <option value="">Add scorer</option>
-            ${homeScorerOptions
-      .map(player =>
-        `<option>${player}</option>`
-      )
-      .join("")}
-          </select>
+          <input
+            class="input scorer-typeahead-input"
+            type="text"
+            list="homeScorers-${name}-${match.id}"
+            placeholder="Type to search ${match.home} players"
+            data-scorer-typeahead="${name}"
+            data-scorer-team="home"
+            data-placeholder-default="Type to search ${match.home} players"
+            data-scorer-options='${escapeHtmlAttr(JSON.stringify(homeScorerOptions))}'>
+          <datalist id="homeScorers-${name}-${match.id}">
+            ${homeScorerOptions.map(player => `<option value="${player}"></option>`).join("")}
+          </datalist>
+          <div class="scorer-chips" data-scorer-chips="${name}" data-chips-team="home">
+            ${homeScorers.map((item, index) => scorerChip(name, "home", item, index)).join("")}
+          </div>
         </label>
         <label class="full-span">${match.away} Scorers
-          <select class="input" data-away-scorer-select="${name}">
-            <option value="">Add scorer</option>
-            ${awayScorerOptions
-      .map(player =>
-        `<option>${player}</option>`
-      )
-      .join("")}
-          </select>
+          <input
+            class="input scorer-typeahead-input"
+            type="text"
+            list="awayScorers-${name}-${match.id}"
+            placeholder="Type to search ${match.away} players"
+            data-scorer-typeahead="${name}"
+            data-scorer-team="away"
+            data-placeholder-default="Type to search ${match.away} players"
+            data-scorer-options='${escapeHtmlAttr(JSON.stringify(awayScorerOptions))}'>
+          <datalist id="awayScorers-${name}-${match.id}">
+            ${awayScorerOptions.map(player => `<option value="${player}"></option>`).join("")}
+          </datalist>
+          <div class="scorer-chips" data-scorer-chips="${name}" data-chips-team="away">
+            ${awayScorers.map((item, index) => scorerChip(name, "away", item, index)).join("")}
+          </div>
         </label>
-        <label class="full-span">Selected scorers<textarea class="input" data-player="${name}" data-field="scorers" rows="2">${prediction.scorers || ""}</textarea></label>
+        <textarea hidden data-player="${name}" data-field="scorers">${prediction.scorers || ""}</textarea>
       </div>
       ${(() => {
 
@@ -1046,7 +1080,20 @@ ${contestants
     `;
 
     })()}
+      <div class="contestant-card-actions">
+        <button class="primary-button" type="button" data-save-player="${name}">Save ${name}'s Prediction</button>
+      </div>
     </section>
+  `;
+}
+
+function scorerChip(name, team, item, index) {
+  const label = item.ownGoal ? `${item.player} (OG)` : item.player;
+  return `
+    <span class="scorer-chip">
+      ${label}
+      <button type="button" class="scorer-chip-remove" data-remove-scorer data-player="${name}" data-team="${team}" data-index="${index}" aria-label="Remove ${label}">×</button>
+    </span>
   `;
 }
 
@@ -1062,7 +1109,7 @@ function renderScoreBreakdown(breakdown = []) {
 
     "Scorers": "⚽ Scorers",
 
-    "Match Decision": "⏱ Match Decision"
+    "Match Decision": "⏱ Match Duration"
 
   };
 
@@ -1112,39 +1159,51 @@ function renderScoreBreakdown(breakdown = []) {
 
 }
 
-async function saveActiveMatch() {
+async function saveActualResult() {
   const match = state.matches.find((item) => item.id === activeMatchId);
+  if (!match) return;
   document.querySelectorAll("[data-result]").forEach((field) => {
     match.actual[field.dataset.result] = field.value;
-  });
-  contestants.forEach(async (name) => {
-    const next = match.predictions[name] || {};
-    document.querySelectorAll(`[data-player="${name}"]`).forEach((field) => {
-      next[field.dataset.field] = field.value;
-    });
-    match.predictions[name] = next;
-    const override = document.querySelector(`[data-override="${name}"]`).value;
-    state.overrides[`${match.id}:${name}`] = override;
-
-    const savedPrediction =
-      await PredictionRepository.saveMatchPrediction(
-        name,
-        match,
-        match.predictions[name]
-      );
-
-    if (savedPrediction) {
-
-      match.predictions[name].databaseId =
-        savedPrediction.id;
-
-    }
   });
   saveState();
   await CalculationService.calculateTournament();
   await loadPointBreakdowns();
   renderAll();
-  showSnack("Match saved and table refreshed");
+  await renderMatchDialog();
+  showSnack("Match result saved and table refreshed");
+}
+
+async function savePlayerPrediction(name) {
+  const match = state.matches.find((item) => item.id === activeMatchId);
+  if (!match) return;
+
+  const next = match.predictions[name] || {};
+  document.querySelectorAll(`[data-player="${name}"]`).forEach((field) => {
+    next[field.dataset.field] = field.value;
+  });
+  match.predictions[name] = next;
+
+  const overrideField = document.querySelector(`[data-override="${name}"]`);
+  const override = overrideField ? overrideField.value : "";
+  state.overrides[`${match.id}:${name}`] = override;
+
+  const savedPrediction =
+    await PredictionRepository.saveMatchPrediction(
+      name,
+      match,
+      match.predictions[name]
+    );
+
+  if (savedPrediction) {
+    match.predictions[name].databaseId = savedPrediction.id;
+  }
+
+  saveState();
+  await CalculationService.calculateTournament();
+  await loadPointBreakdowns();
+  renderAll();
+  await renderMatchDialog();
+  showSnack(`${name}'s prediction saved`);
 }
 
 function renderTournament() {
@@ -1262,14 +1321,42 @@ function renderAll() {
   renderTournament();
 }
 
+document.addEventListener("keydown", async (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const matchCard = event.target.closest("[data-edit-match]");
+  if (matchCard && matchCard.tagName === "ARTICLE") {
+    event.preventDefault();
+    await openMatchDialog(matchCard.dataset.editMatch);
+  }
+});
+
 document.addEventListener("click", async (event) => {
   const tab = event.target.closest(".tab");
   if (tab) {
-    document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
-    document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `${tab.dataset.view}View`));
+    switchToView(tab.dataset.view);
+    closeSideMenu();
   }
-  const editButton = event.target.closest("[data-edit-match]");
-  if (editButton) await openMatchDialog(editButton.dataset.editMatch);
+  if (event.target.closest("#menu-toggle")) {
+    openSideMenu();
+  }
+  if (event.target.closest("#menu-close") || event.target === byId("menuOverlay")) {
+    closeSideMenu();
+  }
+  const homeLink = event.target.closest("[data-go-home]");
+  if (homeLink) {
+    switchToView("dashboard");
+  }
+  const gotoButton = event.target.closest("[data-goto-view]");
+  if (gotoButton) {
+    switchToView(gotoButton.dataset.gotoView);
+    if (gotoButton.dataset.roundFilter) {
+      const filterField = byId("roundFilter");
+      filterField.value = gotoButton.dataset.roundFilter;
+      renderMatches();
+    }
+  }
+  const matchCard = event.target.closest("[data-edit-match]");
+  if (matchCard) await openMatchDialog(matchCard.dataset.editMatch);
   if (event.target.closest("#recalculateAllButton")) {
     await CalculationService.calculateTournament();
     await loadPointBreakdowns();
@@ -1279,54 +1366,72 @@ document.addEventListener("click", async (event) => {
   if (event.target.closest("#calculateTournamentButton")) await saveTournament();
   if (event.target.closest("#exportButton")) exportData();
   if (event.target.closest("[data-calc-match]")) {
-    await saveActiveMatch();
-    renderMatchDialog();
+    await saveActualResult();
+  }
+  const savePlayerButton = event.target.closest("[data-save-player]");
+  if (savePlayerButton) {
+    await savePlayerPrediction(savePlayerButton.dataset.savePlayer);
+  }
+  const removeScorerChip = event.target.closest("[data-remove-scorer]");
+  if (removeScorerChip) {
+    const player = removeScorerChip.dataset.player;
+    const team = removeScorerChip.dataset.team;
+    const index = Number(removeScorerChip.dataset.index);
+    removeScorerAt(player, team, index);
   }
 });
 
+function switchToView(viewName) {
+  document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.view === viewName));
+  document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `${viewName}View`));
+}
+
+function openSideMenu() {
+  byId("sideMenu").classList.add("open");
+  const overlay = byId("menuOverlay");
+  overlay.hidden = false;
+  requestAnimationFrame(() => overlay.classList.add("show"));
+  byId("menu-toggle").setAttribute("aria-expanded", "true");
+}
+
+function closeSideMenu() {
+  byId("sideMenu").classList.remove("open");
+  const overlay = byId("menuOverlay");
+  overlay.classList.remove("show");
+  byId("menu-toggle").setAttribute("aria-expanded", "false");
+  setTimeout(() => { overlay.hidden = true; }, 250);
+}
+
 document.addEventListener("change", async (event) => {
   if (event.target.id === "roundFilter") renderMatches();
-  // Home team scorer dropdown
-  const homeScorer = event.target.closest("[data-home-scorer-select]");
-  if (homeScorer && homeScorer.value) {
 
-    const player = homeScorer.dataset.homeScorerSelect;
-
-    const textarea = document.querySelector(
-      `textarea[data-player="${player}"][data-field="scorers"]`
-    );
-
-    const current = splitList(textarea.value);
-
-    current.push(homeScorer.value);
-
-    textarea.value = current.join(", ");
-
-    homeScorer.value = "";
-
+  // Goals field changed: trim scorers if now over the cap, refresh option availability either way
+  const goalsField = event.target.closest("[data-goals-team]");
+  if (goalsField) {
+    const player = goalsField.dataset.player;
+    const team = goalsField.dataset.goalsTeam;
+    const cap = getGoalsCap(player, team);
+    if (cap !== null) trimScorersToCap(player, team, cap);
+    refreshScorerOptions(player);
     return;
   }
 
-  // Away team scorer dropdown
-  const awayScorer = event.target.closest("[data-away-scorer-select]");
-  if (awayScorer && awayScorer.value) {
+  // Scorer typeahead: selecting a value (from datalist or typed exact match) adds a chip
+  const typeahead = event.target.closest("[data-scorer-typeahead]");
+  if (typeahead) {
+    const value = typeahead.value.trim();
+    const team = typeahead.dataset.scorerTeam;
+    const validOptions = Array.from(
+      document.getElementById(typeahead.getAttribute("list"))?.options || []
+    ).map(option => option.value);
 
-    const player = awayScorer.dataset.awayScorerSelect;
-
-    const textarea = document.querySelector(
-      `textarea[data-player="${player}"][data-field="scorers"]`
-    );
-
-    const current = splitList(textarea.value);
-
-    current.push(awayScorer.value);
-
-    textarea.value = current.join(", ");
-
-    awayScorer.value = "";
-
+    if (value && validOptions.includes(value)) {
+      addScorer(typeahead.dataset.scorerTypeahead, team, value);
+    }
+    typeahead.value = "";
     return;
   }
+
   const copySelect =
     event.target.closest("[data-copy]");
 
@@ -1355,7 +1460,141 @@ document.addEventListener("change", async (event) => {
   }
 });
 
-byId("saveMatchButton").addEventListener("click", saveActiveMatch);
+function getTeamOptionValues(player, team) {
+  const input = document.querySelector(`[data-scorer-typeahead="${player}"][data-scorer-team="${team}"]`);
+  if (!input) return [];
+  try {
+    return JSON.parse(input.dataset.scorerOptions || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function refreshScorerOptions(player) {
+  const match = state.matches.find((item) => item.id === activeMatchId);
+  if (!match) return;
+  const textarea = document.querySelector(`textarea[data-player="${player}"][data-field="scorers"]`);
+  const allEntries = parseScorerPredictions(textarea ? textarea.value : "");
+  const selectedLabels = new Set(allEntries.map(e => e.ownGoal ? `${e.player} (OG)` : e.player));
+
+  ["home", "away"].forEach((team) => {
+    const input = document.querySelector(`[data-scorer-typeahead="${player}"][data-scorer-team="${team}"]`);
+    if (!input) return;
+    const fullOptions = getTeamOptionValues(player, team);
+    const datalist = document.getElementById(input.getAttribute("list"));
+    const cap = getGoalsCap(player, team);
+    const teamSelectedCount = fullOptions.filter(opt => selectedLabels.has(opt)).length;
+    const capReached = cap !== null && teamSelectedCount >= cap;
+
+    const available = capReached
+      ? []
+      : fullOptions.filter(opt => !selectedLabels.has(opt));
+
+    if (datalist) {
+      datalist.innerHTML = available.map(opt => `<option value="${opt}"></option>`).join("");
+    }
+
+    input.disabled = capReached;
+    input.placeholder = capReached
+      ? "Goal limit reached for this team"
+      : input.dataset.placeholderDefault;
+  });
+}
+
+function trimScorersToCap(player, team, cap) {
+  const textarea = document.querySelector(`textarea[data-player="${player}"][data-field="scorers"]`);
+  const allEntries = parseScorerPredictions(textarea.value);
+  const optionValues = getTeamOptionValues(player, team);
+
+  let kept = 0;
+  const filtered = allEntries.filter(entry => {
+    const label = entry.ownGoal ? `${entry.player} (OG)` : entry.player;
+    const belongsToTeam = optionValues.includes(label);
+    if (!belongsToTeam) return true;
+    if (kept < cap) {
+      kept += 1;
+      return true;
+    }
+    return false;
+  });
+
+  if (filtered.length !== allEntries.length) {
+    textarea.value = filtered.map(e => e.ownGoal ? `${e.player} (OG)` : e.player).join(", ");
+    refreshScorerChips(player);
+    showSnack(`Scorer list trimmed to match the predicted goal count`);
+  }
+}
+
+function getGoalsCap(player, team) {
+  const field = document.querySelector(`[data-player="${player}"][data-goals-team="${team}"]`);
+  const value = field ? Number(field.value) : NaN;
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function addScorer(player, team, value) {
+  const textarea = document.querySelector(`textarea[data-player="${player}"][data-field="scorers"]`);
+  const allEntries = parseScorerPredictions(textarea.value);
+  const selectedLabels = new Set(allEntries.map(e => e.ownGoal ? `${e.player} (OG)` : e.player));
+
+  if (selectedLabels.has(value)) {
+    showSnack(`${value.replace(/\s+\(OG\)$/, "")} has already been selected for this contestant.`);
+    return;
+  }
+
+  const fullOptions = getTeamOptionValues(player, team);
+  const cap = getGoalsCap(player, team);
+  const teamSelectedCount = fullOptions.filter(opt => selectedLabels.has(opt)).length;
+
+  if (cap !== null && teamSelectedCount >= cap) {
+    showSnack(`You've already selected ${cap} scorer${cap === 1 ? "" : "s"} for this team — increase the predicted goals to add more.`);
+    return;
+  }
+
+  const ownGoal = value.endsWith(" (OG)");
+  const entryLabel = ownGoal ? value.replace(/\s+\(OG\)$/, "") : value;
+
+  allEntries.push({ player: entryLabel, ownGoal });
+  textarea.value = allEntries.map(e => e.ownGoal ? `${e.player} (OG)` : e.player).join(", ");
+
+  refreshScorerChips(player);
+}
+
+function removeScorerAt(player, team, indexWithinTeam) {
+  const textarea = document.querySelector(`textarea[data-player="${player}"][data-field="scorers"]`);
+  const allEntries = parseScorerPredictions(textarea.value);
+  const teamOptionValues = getTeamOptionValues(player, team);
+
+  let seen = -1;
+  const filtered = allEntries.filter(entry => {
+    const label = entry.ownGoal ? `${entry.player} (OG)` : entry.player;
+    const belongsToTeam = teamOptionValues.includes(label);
+    if (!belongsToTeam) return true;
+    seen += 1;
+    return seen !== indexWithinTeam;
+  });
+
+  textarea.value = filtered.map(e => e.ownGoal ? `${e.player} (OG)` : e.player).join(", ");
+  refreshScorerChips(player);
+}
+
+function refreshScorerChips(player) {
+  const match = state.matches.find((item) => item.id === activeMatchId);
+  const textarea = document.querySelector(`textarea[data-player="${player}"][data-field="scorers"]`);
+  const allEntries = parseScorerPredictions(textarea.value);
+
+  ["home", "away"].forEach((team) => {
+    const container = document.querySelector(`[data-scorer-chips="${player}"][data-chips-team="${team}"]`);
+    if (!container) return;
+    const optionValues = getTeamOptionValues(player, team);
+    const teamEntries = allEntries.filter(entry => {
+      const label = entry.ownGoal ? `${entry.player} (OG)` : entry.player;
+      return optionValues.includes(label);
+    });
+    container.innerHTML = teamEntries.map((item, index) => scorerChip(player, team, item, index)).join("");
+  });
+
+  refreshScorerOptions(player);
+}
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => { });

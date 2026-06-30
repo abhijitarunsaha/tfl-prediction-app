@@ -6,6 +6,14 @@ const ScoreEngine = {
         this.rules.push(rule);
     },
 
+    getPredictedOutcome(prediction) {
+        return prediction?.matchOutcome ?? "";
+    },
+
+    getActualOutcome(match) {
+        return match?.actual?.matchOutcome ?? "";
+    },
+
     getPredictedScore(prediction) {
 
         return {

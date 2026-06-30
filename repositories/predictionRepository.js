@@ -109,6 +109,9 @@ const PredictionRepository = {
             match_id:
                 match.databaseId,
 
+            predicted_result:
+                prediction.matchOutcome || "",
+
             predicted_home_goals:
 
                 prediction.homeGoals === ""

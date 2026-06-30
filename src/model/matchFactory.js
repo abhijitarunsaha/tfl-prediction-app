@@ -20,6 +20,9 @@ const MatchFactory = {
                 awayGoalsFinal:
                     baseMatch.actual.awayGoalsFinal,
 
+                matchOutcome:
+                    baseMatch.actual.matchOutcome || "",
+
                 scorers:
                     baseMatch.actual.scorers,
 
@@ -52,7 +55,9 @@ const MatchFactory = {
 
                     scorers: "",
 
-                    matchDecision: ""
+                    matchDecision: "",
+                    
+                    matchOutcome: ""
 
                 }
 
