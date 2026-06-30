@@ -87,7 +87,9 @@
               <p class="eyebrow">Live table</p>
               <h2>Leaderboard</h2>
             </div>
-            <button class="text-button" id="recalculateAllButton">Calculate All</button>
+            <button class="icon-button refresh-button" id="recalculateAllButton" type="button" aria-label="Recalculate leaderboard" title="Recalculate leaderboard">
+              <span class="material-icon" data-icon="↻">refresh</span>
+            </button>
           </div>
           <div class="leaderboard" id="leaderboard"></div>
         </section>
@@ -561,6 +563,7 @@
       <div class="dialog-actions">
         <button class="text-button" value="cancel">Close</button>
       </div>
+      <div class="snackbar" id="dialogSnackbar" role="status" aria-live="polite"></div>
     </form>
   </dialog>
 

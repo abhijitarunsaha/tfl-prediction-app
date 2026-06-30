@@ -6,6 +6,14 @@ let activeMatchId = null;
 
 initializeApplication();
 
+function ensureSyncButtonIcon() {
+  const button = document.getElementById("sync-btn");
+  if (!button) return;
+  if (!button.querySelector(".material-icon")) {
+    button.innerHTML = `<span class="material-icon" data-icon="↻">sync</span>`;
+  }
+}
+
 document
 
   .getElementById("sync-btn")
@@ -26,8 +34,7 @@ document
         "syncing"
       );
 
-      button.textContent =
-        "Syncing...";
+      button.setAttribute("aria-label", "Syncing…");
 
       try {
 
@@ -42,13 +49,9 @@ document
           "syncing"
         );
 
-        button.textContent = "✔ Synced";
+        button.setAttribute("aria-label", "Sync");
 
-        setTimeout(() => {
-
-          button.textContent = "🔄 Sync";
-
-        }, 2000);
+        ensureSyncButtonIcon();
 
       }
 
@@ -155,9 +158,13 @@ async function initializeApplication() {
 
   await SyncService.refreshLastSync();
 
+  ensureSyncButtonIcon();
+
   renderAll();
 
   SyncService.start();
+
+  setInterval(ensureSyncButtonIcon, 3000);
 
   if (
     DeveloperTools.enabled()
@@ -1300,7 +1307,8 @@ function renderSettings() {
 }
 
 function showSnack(message) {
-  const snackbar = byId("snackbar");
+  const dialog = document.getElementById("matchDialog");
+  const snackbar = (dialog && dialog.open) ? byId("dialogSnackbar") : byId("snackbar");
   snackbar.textContent = message;
   snackbar.classList.add("show");
   window.setTimeout(() => snackbar.classList.remove("show"), 2200);
@@ -1358,10 +1366,16 @@ document.addEventListener("click", async (event) => {
   const matchCard = event.target.closest("[data-edit-match]");
   if (matchCard) await openMatchDialog(matchCard.dataset.editMatch);
   if (event.target.closest("#recalculateAllButton")) {
+    const refreshBtn = byId("recalculateAllButton");
+    refreshBtn.classList.add("syncing");
+    try {
     await CalculationService.calculateTournament();
     await loadPointBreakdowns();
     renderAll();
     showSnack("Leaderboard recalculated");
+    } finally {
+      byId("recalculateAllButton")?.classList.remove("syncing");
+    }
   }
   if (event.target.closest("#calculateTournamentButton")) await saveTournament();
   if (event.target.closest("#exportButton")) exportData();
