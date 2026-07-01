@@ -66,20 +66,33 @@
           <div class="hero-ball" aria-hidden="true"></div>
         </section>
 
-        <div class="score-strip">
-          <div class="metric">
-            <span>Total Players</span>
-            <strong id="metricPlayers">6</strong>
+        <div class="stat-bar">
+          <div class="stat-item">
+            <span class="stat-label">Total Players</span>
+            <strong class="stat-value" id="metricPlayers">6</strong>
           </div>
-          <div class="metric">
-            <span>Leader</span>
-            <strong id="metricLeader">-</strong>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-label">Leader</span>
+            <strong class="stat-value" id="metricLeader">-</strong>
           </div>
-          <div class="metric">
-            <span>Weekly Topper</span>
-            <strong id="metricTopper">-</strong>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-label">Weekly Topper</span>
+            <strong class="stat-value" id="metricTopper">-</strong>
           </div>
         </div>
+
+        <section class="panel" id="upcomingPreviewSection" hidden>
+          <div class="section-title">
+            <div>
+              <h2>Coming up...</h2>
+              <p class="eyebrow">View Predictions</p>
+              
+            </div>
+          </div>
+          <div class="upcoming-preview-list" id="upcomingPreviewList"></div>
+        </section>
 
         <section class="panel">
           <div class="section-title">
@@ -563,8 +576,23 @@
       <div class="dialog-actions">
         <button class="text-button" value="cancel">Close</button>
       </div>
-      <div class="snackbar" id="dialogSnackbar" role="status" aria-live="polite"></div>
     </form>
+    <div class="snackbar dialog-snackbar" id="dialogSnackbar" role="status" aria-live="polite"></div>
+  </dialog>
+
+  <dialog id="previewDialog">
+    <div class="preview-dialog-card">
+      <div class="preview-dialog-header">
+        <div>
+          <p class="eyebrow" id="previewDialogEyebrow">Predictions</p>
+          <h2 id="previewDialogTitle">Match</h2>
+        </div>
+        <button class="icon-button" id="previewDialogClose" aria-label="Close">
+          <span class="material-icon" data-icon="×">close</span>
+        </button>
+      </div>
+      <div id="previewDialogContent" class="preview-dialog-content"></div>
+    </div>
   </dialog>
 
   <div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>

@@ -694,11 +694,158 @@ function renderDashboard() {
       <span class="points">${signed(row.weekly)}</span>
     </div>
   `).join("");
+
+  renderUpcomingPreview();
 }
 
 function signed(value) {
   return value > 0 ? `+${value}` : String(value);
 }
+
+/* ── Upcoming-preview section ─────────────── */
+function renderUpcomingPreview() {
+  const now = new Date();
+  const horizon = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+  const upcoming = state.matches
+    .filter(m => {
+      if (isCompleted(m)) return false;
+      const k = new Date(m.kickoff);
+      return k >= now && k <= horizon;
+    })
+    .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
+
+  const section = byId("upcomingPreviewSection");
+  const list    = byId("upcomingPreviewList");
+  if (!upcoming.length) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  list.innerHTML = upcoming.map(match => {
+    const kickoffTime = new Intl.DateTimeFormat("en-IN", {
+      hour: "2-digit", minute: "2-digit", hour12: true
+    }).format(new Date(match.kickoff));
+    const preds = submittedCount(match);
+    return `
+      <div class="preview-match-card" role="button" tabindex="0"
+           data-preview-match="${match.id}"
+           aria-label="View predictions for ${match.home} vs ${match.away}">
+        <div class="preview-match-teams">
+          <span>${match.home}</span>
+          <span class="preview-vs">vs</span>
+          <span>${match.away}</span>
+        </div>
+        <div class="preview-match-meta">
+          <span class="preview-match-time">${kickoffTime}</span>
+          <span class="preview-match-preds">${preds} / ${contestants.length} predicted</span>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+/* ── Prediction summary dialog ────────────── */
+function formatDuration(code) {
+  if (code === "90")  return "90 min";
+  if (code === "ET")  return "Extra Time";
+  if (code === "PEN") return "Penalties";
+  return "";
+}
+
+function formatPredictionSummary(match, name) {
+  const prediction = match.predictions[name];
+  const hasGoals = prediction &&
+    prediction.homeGoals !== "" && prediction.homeGoals !== undefined &&
+    prediction.awayGoals !== "" && prediction.awayGoals !== undefined;
+
+  if (!hasGoals) return null;
+
+  const home = Number(prediction.homeGoals);
+  const away = Number(prediction.awayGoals);
+  const outcome = prediction.matchOutcome;
+  const duration = formatDuration(prediction.matchDecision);
+
+  // Outcome phrase
+  let outcomePhrase;
+  if (home > away) {
+    outcomePhrase = `${match.home} wins ${home}-${away}`;
+  } else if (away > home) {
+    outcomePhrase = `${match.away} wins ${away}-${home}`;
+  } else {
+    // It's a draw / decided by tiebreaker
+    if (outcome === "HOME") outcomePhrase = `${home}-${away} — ${match.home} wins tiebreaker`;
+    else if (outcome === "AWAY") outcomePhrase = `${home}-${away} — ${match.away} wins tiebreaker`;
+    else outcomePhrase = `${home}-${away} draw`;
+  }
+  if (duration) outcomePhrase += ` (${duration})`;
+
+  // Scorers
+  const allScorers = parseScorerPredictions(prediction.scorers || "");
+  const scorerNames = allScorers.map(s => s.ownGoal ? `${s.player} (OG)` : s.player);
+
+  let scorerPhrase = "";
+  if (scorerNames.length === 1) {
+    scorerPhrase = `. ${scorerNames[0]} scores.`;
+  } else if (scorerNames.length === 2) {
+    scorerPhrase = `. ${scorerNames[0]} and ${scorerNames[1]} score.`;
+  } else if (scorerNames.length > 2) {
+    const last = scorerNames.at(-1);
+    const rest = scorerNames.slice(0, -1).join(", ");
+    scorerPhrase = `. ${rest} and ${last} score.`;
+  }
+
+  return outcomePhrase + scorerPhrase;
+}
+
+function openPreviewDialog(matchId) {
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+
+  byId("previewDialogEyebrow").textContent = match.round || "Predictions";
+  byId("previewDialogTitle").textContent = `${match.home} vs ${match.away}`;
+
+  const rows = contestants.map(name => {
+    const summary = formatPredictionSummary(match, name);
+    return `
+      <div class="prediction-summary-row">
+        <span class="prediction-summary-name">${name}</span>
+        ${summary
+          ? `<span class="prediction-summary-text">${summary}</span>`
+          : `<span class="prediction-summary-no-pred">No prediction submitted yet</span>`
+        }
+      </div>`;
+  }).join("");
+
+  byId("previewDialogContent").innerHTML = rows ||
+    `<p class="preview-no-preds">No predictions submitted yet.</p>`;
+
+  byId("previewDialog").showModal();
+  pushNavState({ type: "previewDialog", matchId });
+}
+
+// Close preview dialog via button
+byId("previewDialogClose").addEventListener("click", () => {
+  byId("previewDialog").close();
+});
+
+// Close preview dialog by clicking the backdrop
+byId("previewDialog").addEventListener("click", (event) => {
+  if (event.target === byId("previewDialog")) {
+    byId("previewDialog").close();
+  }
+});
+
+// Sync history when preview dialog closes (Esc / backdrop / button)
+byId("previewDialog").addEventListener("close", () => {
+  if (suppressHistoryPush) return;
+  if (history.state?.tfl?.type === "previewDialog") {
+    // Quietly rewrite the stale previewDialog entry back to root
+    // without calling history.back() — that would trigger popstate
+    // which would show the exit-confirmation prompt incorrectly.
+    history.replaceState({ tfl: { type: "root" } }, "");
+  }
+});
+
+
 
 function filterMatches(matches, filter) {
 
@@ -830,6 +977,7 @@ async function openMatchDialog(matchId) {
   activeMatchId = matchId;
   await renderMatchDialog();
   byId("matchDialog").showModal();
+  pushNavState({ type: "dialog", matchId });
 }
 
 async function renderMatchDialog() {
@@ -1336,13 +1484,18 @@ document.addEventListener("keydown", async (event) => {
     event.preventDefault();
     await openMatchDialog(matchCard.dataset.editMatch);
   }
+  const previewCard = event.target.closest("[data-preview-match]");
+  if (previewCard) {
+    event.preventDefault();
+    openPreviewDialog(previewCard.dataset.previewMatch);
+  }
 });
 
 document.addEventListener("click", async (event) => {
   const tab = event.target.closest(".tab");
   if (tab) {
     switchToView(tab.dataset.view);
-    closeSideMenu();
+    closeSideMenuUI();
   }
   if (event.target.closest("#menu-toggle")) {
     openSideMenu();
@@ -1363,6 +1516,8 @@ document.addEventListener("click", async (event) => {
       renderMatches();
     }
   }
+  const previewCard = event.target.closest("[data-preview-match]");
+  if (previewCard) { openPreviewDialog(previewCard.dataset.previewMatch); return; }
   const matchCard = event.target.closest("[data-edit-match]");
   if (matchCard) await openMatchDialog(matchCard.dataset.editMatch);
   if (event.target.closest("#recalculateAllButton")) {
@@ -1395,12 +1550,146 @@ document.addEventListener("click", async (event) => {
   }
 });
 
+/* ══════════════════════════════════════════════
+   MOBILE BACK-BUTTON NAVIGATION
+   Treat dashboard (no dialog, no menu) as the root
+   state. Every other UI state (a non-dashboard view,
+   the side menu, or the match dialog) gets its own
+   history entry, so the hardware/gesture back button
+   steps back one UI state at a time instead of
+   immediately exiting the app. Pressing back again
+   once at the root asks for exit confirmation.
+   ══════════════════════════════════════════════ */
+let suppressHistoryPush = false;
+let pendingExitConfirm = false;
+
+function currentNavState() {
+  const dialog = byId("matchDialog");
+  if (dialog && dialog.open) {
+    return { type: "dialog", matchId: activeMatchId };
+  }
+  const sideMenu = byId("sideMenu");
+  if (sideMenu && sideMenu.classList.contains("open")) {
+    return { type: "menu" };
+  }
+  const activeView = document.querySelector(".view.active");
+  const viewName = activeView ? activeView.id.replace(/View$/, "") : "dashboard";
+  if (viewName !== "dashboard") {
+    return { type: "view", view: viewName };
+  }
+  return { type: "root" };
+}
+
+function pushNavState(navState) {
+  if (suppressHistoryPush) return;
+  history.pushState({ tfl: navState }, "");
+}
+
+function applyNavState(navState) {
+  if (!navState || navState.type === "root") {
+    closeSideMenuUI();
+    closeMatchDialogUI();
+    closePreviewDialogUI();
+    applyViewUI("dashboard");
+    return;
+  }
+  if (navState.type === "view") {
+    closeSideMenuUI();
+    closeMatchDialogUI();
+    closePreviewDialogUI();
+    applyViewUI(navState.view);
+    return;
+  }
+  if (navState.type === "menu") {
+    closeMatchDialogUI();
+    closePreviewDialogUI();
+    openSideMenuUI();
+    return;
+  }
+  if (navState.type === "dialog") {
+    closeSideMenuUI();
+    closePreviewDialogUI();
+    if (navState.matchId) {
+      activeMatchId = navState.matchId;
+      suppressHistoryPush = true;
+      renderMatchDialog().then(() => {
+        const dialog = byId("matchDialog");
+        if (dialog && !dialog.open) dialog.showModal();
+        suppressHistoryPush = false;
+      });
+    }
+    return;
+  }
+  if (navState.type === "previewDialog") {
+    closeSideMenuUI();
+    closeMatchDialogUI();
+    if (navState.matchId) {
+      suppressHistoryPush = true;
+      openPreviewDialog(navState.matchId);
+      suppressHistoryPush = false;
+    }
+  }
+}
+
+function closePreviewDialogUI() {
+  const d = byId("previewDialog");
+  if (d && d.open) d.close();
+}
+
+window.addEventListener("popstate", (event) => {
+  const navState = event.state && event.state.tfl;
+
+  if (!navState || navState.type === "root") {
+    if (pendingExitConfirm) {
+      // User confirmed exit and pressed back again — let it proceed.
+      return;
+    }
+    pendingExitConfirm = true;
+    suppressHistoryPush = true;
+    history.pushState({ tfl: { type: "root" } }, "");
+    suppressHistoryPush = false;
+
+    const wantsToExit = window.confirm("Press back again to exit TFPL. Tap Cancel to stay.");
+    if (wantsToExit) {
+      pendingExitConfirm = false;
+      history.back();
+    } else {
+      pendingExitConfirm = false;
+    }
+    return;
+  }
+
+  pendingExitConfirm = false;
+  applyNavState(navState);
+});
+
+// Establish the root entry on load so the very first back press
+// from the dashboard triggers the exit-confirmation flow above
+// rather than leaving the app immediately.
+if (!history.state || !history.state.tfl) {
+  history.replaceState({ tfl: { type: "root" } }, "");
+}
+
 function switchToView(viewName) {
+  applyViewUI(viewName);
+  if (viewName === "dashboard") {
+    pushNavState({ type: "root" });
+  } else {
+    pushNavState({ type: "view", view: viewName });
+  }
+}
+
+function applyViewUI(viewName) {
   document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.view === viewName));
   document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `${viewName}View`));
 }
 
 function openSideMenu() {
+  openSideMenuUI();
+  pushNavState({ type: "menu" });
+}
+
+function openSideMenuUI() {
   byId("sideMenu").classList.add("open");
   const overlay = byId("menuOverlay");
   overlay.hidden = false;
@@ -1409,11 +1698,25 @@ function openSideMenu() {
 }
 
 function closeSideMenu() {
+  closeSideMenuUI();
+  if (history.state?.tfl?.type === "menu") {
+    // Quietly rewrite the menu entry back to root — don't use
+    // history.back() which would fire popstate and exit-confirmation.
+    history.replaceState({ tfl: { type: "root" } }, "");
+  }
+}
+
+function closeSideMenuUI() {
   byId("sideMenu").classList.remove("open");
   const overlay = byId("menuOverlay");
   overlay.classList.remove("show");
   byId("menu-toggle").setAttribute("aria-expanded", "false");
   setTimeout(() => { overlay.hidden = true; }, 250);
+}
+
+function closeMatchDialogUI() {
+  const dialog = byId("matchDialog");
+  if (dialog && dialog.open) dialog.close();
 }
 
 document.addEventListener("change", async (event) => {
@@ -1609,6 +1912,15 @@ function refreshScorerChips(player) {
 
   refreshScorerOptions(player);
 }
+
+byId("matchDialog").addEventListener("close", () => {
+  if (suppressHistoryPush) return;
+  if (history.state?.tfl?.type === "dialog") {
+    // Quietly rewrite the stale dialog entry back to root without
+    // calling history.back(), which would trigger the exit-confirmation.
+    history.replaceState({ tfl: { type: "root" } }, "");
+  }
+});
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => { });

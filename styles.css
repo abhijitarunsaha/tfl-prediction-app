@@ -470,6 +470,58 @@ main { padding: 16px 14px 40px; }
 /* ══════════════════════════════════════════════
    SCORE STRIP
    ══════════════════════════════════════════════ */
+/* ── Stat bar (replaces score-strip) ──────── */
+.stat-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  background: var(--surface-card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(8px);
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 3vw, 1.45rem);
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--line-strong);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+/* Keep .metric / .score-strip for any remaining usages */
 .score-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -489,7 +541,6 @@ main { padding: 16px 14px 40px; }
   border-color: rgba(246,200,68,0.22);
   box-shadow: var(--shadow-card), 0 0 18px rgba(246,200,68,0.10);
 }
-
 .metric span {
   display: block;
   margin-bottom: 6px;
@@ -499,13 +550,168 @@ main { padding: 16px 14px 40px; }
   text-transform: uppercase;
   color: var(--muted);
 }
-
 .metric strong {
   font-family: var(--font-display);
   font-size: clamp(1.15rem, 3.5vw, 1.7rem);
   font-weight: 900;
   color: var(--gold);
   letter-spacing: 0.01em;
+}
+
+/* ── Upcoming preview cards ────────────────── */
+.upcoming-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-match-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radius);
+  background: rgba(19,33,58,0.55);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: border-color .18s, background .18s, transform .12s;
+}
+.preview-match-card:hover,
+.preview-match-card:focus-visible {
+  border-color: rgba(246,200,68,0.3);
+  background: rgba(246,200,68,0.07);
+  transform: translateY(-1px);
+}
+.preview-match-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.preview-match-teams {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--off-white);
+  flex: 1;
+  min-width: 0;
+}
+.preview-match-teams .preview-vs {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.preview-match-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.preview-match-time {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 0.03em;
+}
+.preview-match-preds {
+  font-size: 0.7rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── Prediction preview dialog ─────────────── */
+.preview-dialog-card {
+  width: min(560px, calc(100vw - 24px));
+  max-height: min(520px, calc(100svh - 40px));
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, rgba(10,18,30,0.97) 0%, rgba(7,21,15,0.97) 100%);
+  border: 1px solid rgba(246,200,68,0.16);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  backdrop-filter: blur(24px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+#previewDialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: var(--radius-lg);
+}
+#previewDialog::backdrop {
+  background: rgba(2,5,10,0.7);
+  backdrop-filter: blur(4px);
+}
+
+.preview-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.preview-dialog-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.preview-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 360px;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(246,200,68,0.25) transparent;
+}
+
+.prediction-summary-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--ink);
+  transition: background .15s;
+}
+.prediction-summary-row:hover { background: rgba(246,200,68,0.07); }
+
+.prediction-summary-name {
+  font-weight: 800;
+  color: var(--gold);
+  white-space: nowrap;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+.prediction-summary-text {
+  color: var(--off-white);
+}
+.prediction-summary-no-pred {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.preview-no-preds {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.88rem;
+  padding: 20px 0;
 }
 
 /* ══════════════════════════════════════════════
@@ -1101,9 +1307,19 @@ ul li, ol li { margin-left: 18px; margin-bottom: 4px; font-size: 0.88rem; color:
 }
 
 #dialogSnackbar {
-  position: absolute;
-  bottom: 14px;
-  z-index: 60;
+  /* Direct child of <dialog> (top layer) — position:fixed resolves
+     to the viewport cleanly here with no containing-block interference
+     from backdrop-filter or overflow:auto on .dialog-card */
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  z-index: 9999;
+  /* Reset the inherited translate from .snackbar so .show works */
+}
+#dialogSnackbar.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 
 /* ══════════════════════════════════════════════
@@ -1142,7 +1358,6 @@ ul li, ol li { margin-left: 18px; margin-bottom: 4px; font-size: 0.88rem; color:
 @media (max-width: 640px) {
   .side-menu { width: 86vw; }
 
-  .score-strip,
   .actuals-grid,
   .prediction-grid,
   .result-grid { grid-template-columns: 1fr; }
