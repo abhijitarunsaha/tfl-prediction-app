@@ -51,12 +51,20 @@ class OpenFootballProvider {
 
         const squads = response.data;
 
-        const team = squads.find(
+        let team = squads.find(
             t => t.name === teamName
         );
 
-        if (!team)
-            return [];
+        if (!team) {
+
+            if(teamName === "USA") {
+                team = squads.find(t => t.name === "United States");
+            } else if(teamName === "Bosnia & Herzegovina") {
+                team = squads.find(t => t.name === "Bosnia and Herzegovina");
+            }else {
+                return [];
+            }
+        }
 
         return OpenFootballMapper.mapSquad(
             team.players
